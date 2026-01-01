@@ -186,6 +186,7 @@ class ProductModel {
   final ProductSpecs specs;
   final List<IncludedItem> includedItems;
   final ProductWarranty? warranty;
+  final String? youtubeUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -208,6 +209,7 @@ class ProductModel {
     required this.specs,
     required this.includedItems,
     this.warranty,
+    this.youtubeUrl,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -276,6 +278,7 @@ class ProductModel {
       warranty: data['warranty'] != null
           ? ProductWarranty.fromMap(data['warranty'])
           : null,
+      youtubeUrl: data['youtubeUrl'],
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -301,6 +304,7 @@ class ProductModel {
       'specs': specs.toMap(),
       'includedItems': includedItems.map((item) => item.toMap()).toList(),
       'warranty': warranty?.toMap(),
+      'youtubeUrl': youtubeUrl,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -326,6 +330,7 @@ class ProductModel {
     ProductSpecs? specs,
     List<IncludedItem>? includedItems,
     ProductWarranty? warranty,
+    String? youtubeUrl,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -348,6 +353,7 @@ class ProductModel {
       specs: specs ?? this.specs,
       includedItems: includedItems ?? this.includedItems,
       warranty: warranty ?? this.warranty,
+      youtubeUrl: youtubeUrl ?? this.youtubeUrl,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

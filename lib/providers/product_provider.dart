@@ -93,6 +93,7 @@ class ProductProvider extends ChangeNotifier {
     required ProductSpecs specs,
     required List<IncludedItem> includedItems,
     ProductWarranty? warranty,
+    String? youtubeUrl,
   }) async {
     _isLoading = true;
     _error = null;
@@ -143,6 +144,7 @@ class ProductProvider extends ChangeNotifier {
         specs: specs,
         includedItems: includedItems,
         warranty: warranty,
+        youtubeUrl: youtubeUrl,
         createdAt: now,
         updatedAt: now,
       );
@@ -185,6 +187,7 @@ class ProductProvider extends ChangeNotifier {
     required ProductSpecs specs,
     required List<IncludedItem> includedItems,
     ProductWarranty? warranty,
+    String? youtubeUrl,
   }) async {
     _isLoading = true;
     _error = null;
@@ -233,6 +236,7 @@ class ProductProvider extends ChangeNotifier {
         'specs': specs.toMap(),
         'includedItems': includedItems.map((item) => item.toMap()).toList(),
         'warranty': warranty?.toMap(),
+        'youtubeUrl': youtubeUrl,
         'updatedAt': DateTime.now(),
       };
 

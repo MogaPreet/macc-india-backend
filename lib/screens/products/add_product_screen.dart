@@ -62,6 +62,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _warrantyTypeController = TextEditingController();
   final _warrantyDescController = TextEditingController();
 
+  // YouTube URL
+  final _youtubeUrlController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -110,6 +113,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _warrantyDurationController.dispose();
     _warrantyTypeController.dispose();
     _warrantyDescController.dispose();
+    _youtubeUrlController.dispose();
     super.dispose();
   }
 
@@ -208,6 +212,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
       specs: _buildSpecs(),
       includedItems: _includedItems,
       warranty: _buildWarranty(),
+      youtubeUrl: _youtubeUrlController.text.trim().isNotEmpty
+          ? _youtubeUrlController.text.trim()
+          : null,
     );
 
     if (success) {
@@ -441,6 +448,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       _buildSectionTitle('Warranty (Optional)'),
                       const SizedBox(height: AppDimensions.paddingM),
                       _buildWarrantyForm(),
+
+                      const SizedBox(height: AppDimensions.paddingXL),
+                      _buildSectionTitle('YouTube Video (Optional)'),
+                      const SizedBox(height: AppDimensions.paddingM),
+                      TextFormField(
+                        controller: _youtubeUrlController,
+                        decoration: const InputDecoration(
+                          labelText: 'YouTube URL',
+                          hintText: 'e.g., https://www.youtube.com/watch?v=...',
+                          prefixIcon: Icon(Icons.video_library),
+                        ),
+                      ),
 
                       const SizedBox(height: AppDimensions.paddingXL),
                       _buildSectionTitle('Product Settings'),

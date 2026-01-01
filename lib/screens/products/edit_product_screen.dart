@@ -60,6 +60,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
   late TextEditingController _warrantyTypeController;
   late TextEditingController _warrantyDescController;
 
+  // YouTube URL
+  late TextEditingController _youtubeUrlController;
+
   @override
   void initState() {
     super.initState();
@@ -127,6 +130,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
       text: product.warranty?.description ?? '',
     );
 
+    // YouTube URL
+    _youtubeUrlController = TextEditingController(
+      text: product.youtubeUrl ?? '',
+    );
+
     // Fetch brands and categories
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BrandProvider>().fetchBrands();
@@ -154,6 +162,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _warrantyDurationController.dispose();
     _warrantyTypeController.dispose();
     _warrantyDescController.dispose();
+    _youtubeUrlController.dispose();
     super.dispose();
   }
 
@@ -254,6 +263,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
       specs: _buildSpecs(),
       includedItems: _includedItems,
       warranty: _buildWarranty(),
+      youtubeUrl: _youtubeUrlController.text.trim().isNotEmpty
+          ? _youtubeUrlController.text.trim()
+          : null,
     );
 
     if (success) {
@@ -489,6 +501,18 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       _buildSectionTitle('Warranty (Optional)'),
                       const SizedBox(height: AppDimensions.paddingM),
                       _buildWarrantyForm(),
+
+                      const SizedBox(height: AppDimensions.paddingXL),
+                      _buildSectionTitle('YouTube Video (Optional)'),
+                      const SizedBox(height: AppDimensions.paddingM),
+                      TextFormField(
+                        controller: _youtubeUrlController,
+                        decoration: const InputDecoration(
+                          labelText: 'YouTube URL',
+                          hintText: 'e.g., https://www.youtube.com/watch?v=...',
+                          prefixIcon: Icon(Icons.video_library),
+                        ),
+                      ),
 
                       const SizedBox(height: AppDimensions.paddingXL),
                       _buildSectionTitle('Product Settings'),

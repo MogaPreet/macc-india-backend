@@ -28,8 +28,9 @@ class ProductProvider extends ChangeNotifier {
       _products.where((p) => p.isFeatured && p.isActive).toList();
 
   /// Get products by category
-  List<ProductModel> getProductsByCategory(String categoryId) =>
-      _products.where((p) => p.categoryId == categoryId && p.isActive).toList();
+  List<ProductModel> getProductsByCategory(String categoryId) => _products
+      .where((p) => p.categoryIds.contains(categoryId) && p.isActive)
+      .toList();
 
   /// Get products by brand
   List<ProductModel> getProductsByBrand(String brandId) =>
@@ -81,8 +82,8 @@ class ProductProvider extends ChangeNotifier {
     String? description,
     required String brandId,
     required String brandName,
-    required String categoryId,
-    required String categoryName,
+    required List<String> categoryIds,
+    required List<String> categoryNames,
     required double price,
     double? originalPrice,
     required String condition,
@@ -132,8 +133,8 @@ class ProductProvider extends ChangeNotifier {
         description: description,
         brandId: brandId,
         brandName: brandName,
-        categoryId: categoryId,
-        categoryName: categoryName,
+        categoryIds: categoryIds,
+        categoryNames: categoryNames,
         price: price,
         originalPrice: originalPrice,
         condition: condition,
@@ -174,8 +175,8 @@ class ProductProvider extends ChangeNotifier {
     String? description,
     required String brandId,
     required String brandName,
-    required String categoryId,
-    required String categoryName,
+    required List<String> categoryIds,
+    required List<String> categoryNames,
     required double price,
     double? originalPrice,
     required String condition,
@@ -224,8 +225,8 @@ class ProductProvider extends ChangeNotifier {
         'description': description,
         'brandId': brandId,
         'brandName': brandName,
-        'categoryId': categoryId,
-        'categoryName': categoryName,
+        'categoryIds': categoryIds,
+        'categoryNames': categoryNames,
         'price': price,
         'originalPrice': originalPrice,
         'condition': condition,

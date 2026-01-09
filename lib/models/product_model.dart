@@ -174,8 +174,21 @@ class ProductModel {
   final String? description;
   final String brandId;
   final String brandName;
-  final String categoryId;
-  final String categoryName;
+
+  /// List of category IDs this product belongs to
+  final List<String> categoryIds;
+
+  /// List of category names this product belongs to
+  final List<String> categoryNames;
+
+  /// Legacy single category ID (for backward compatibility)
+  @Deprecated('Use categoryIds instead')
+  String get categoryId => categoryIds.isNotEmpty ? categoryIds.first : '';
+
+  /// Legacy single category name (for backward compatibility)
+  @Deprecated('Use categoryNames instead')
+  String get categoryName =>
+      categoryNames.isNotEmpty ? categoryNames.first : '';
   final double price;
   final double? originalPrice;
   final String condition;
@@ -197,8 +210,8 @@ class ProductModel {
     this.description,
     required this.brandId,
     required this.brandName,
-    required this.categoryId,
-    required this.categoryName,
+    required this.categoryIds,
+    required this.categoryNames,
     required this.price,
     this.originalPrice,
     required this.condition,
@@ -264,8 +277,19 @@ class ProductModel {
       description: data['description'],
       brandId: data['brandId'] ?? '',
       brandName: data['brandName'] ?? '',
-      categoryId: data['categoryId'] ?? '',
-      categoryName: data['categoryName'] ?? '',
+      // Handle both new (list) and legacy (single) category formats
+      categoryIds: data['categoryIds'] != null
+          ? List<String>.from(data['categoryIds'])
+          : (data['categoryId'] != null &&
+                    data['categoryId'].toString().isNotEmpty
+                ? [data['categoryId'] as String]
+                : <String>[]),
+      categoryNames: data['categoryNames'] != null
+          ? List<String>.from(data['categoryNames'])
+          : (data['categoryName'] != null &&
+                    data['categoryName'].toString().isNotEmpty
+                ? [data['categoryName'] as String]
+                : <String>[]),
       price: (data['price'] ?? 0).toDouble(),
       originalPrice: data['originalPrice']?.toDouble(),
       condition: data['condition'] ?? ProductCondition.good,
@@ -292,8 +316,8 @@ class ProductModel {
       'description': description,
       'brandId': brandId,
       'brandName': brandName,
-      'categoryId': categoryId,
-      'categoryName': categoryName,
+      'categoryIds': categoryIds,
+      'categoryNames': categoryNames,
       'price': price,
       'originalPrice': originalPrice,
       'condition': condition,
@@ -318,8 +342,8 @@ class ProductModel {
     String? description,
     String? brandId,
     String? brandName,
-    String? categoryId,
-    String? categoryName,
+    List<String>? categoryIds,
+    List<String>? categoryNames,
     double? price,
     double? originalPrice,
     String? condition,
@@ -341,8 +365,8 @@ class ProductModel {
       description: description ?? this.description,
       brandId: brandId ?? this.brandId,
       brandName: brandName ?? this.brandName,
-      categoryId: categoryId ?? this.categoryId,
-      categoryName: categoryName ?? this.categoryName,
+      categoryIds: categoryIds ?? this.categoryIds,
+      categoryNames: categoryNames ?? this.categoryNames,
       price: price ?? this.price,
       originalPrice: originalPrice ?? this.originalPrice,
       condition: condition ?? this.condition,

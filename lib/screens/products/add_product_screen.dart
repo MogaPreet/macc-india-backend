@@ -35,8 +35,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   bool _isActive = true;
   String? _selectedBrandId;
   String? _selectedBrandName;
-  String? _selectedCategoryId;
-  String? _selectedCategoryName;
+  List<String> _selectedCategoryIds = [];
+  List<String> _selectedCategoryNames = [];
   String _selectedCondition = ProductCondition.likeNew;
 
   // Specs controllers
@@ -180,9 +180,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
-    if (_selectedBrandId == null || _selectedCategoryId == null) {
+    if (_selectedBrandId == null || _selectedCategoryIds.isEmpty) {
       Fluttertoast.showToast(
-        msg: 'Please select brand and category',
+        msg: 'Please select brand and at least one category',
         backgroundColor: AppColors.errorColor,
       );
       return;
@@ -198,8 +198,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
           : null,
       brandId: _selectedBrandId!,
       brandName: _selectedBrandName!,
-      categoryId: _selectedCategoryId!,
-      categoryName: _selectedCategoryName!,
+      categoryIds: _selectedCategoryIds,
+      categoryNames: _selectedCategoryNames,
       price: double.parse(_priceController.text.trim()),
       originalPrice: _originalPriceController.text.trim().isNotEmpty
           ? double.parse(_originalPriceController.text.trim())
@@ -321,38 +321,61 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               },
                             ),
                           ),
-                          const SizedBox(width: AppDimensions.paddingM),
-                          Expanded(
-                            child: Consumer<CategoryProvider>(
-                              builder: (context, categoryProvider, child) {
-                                return DropdownButtonFormField<String>(
-                                  initialValue: _selectedCategoryId,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Category *',
-                                    hintText: 'Select Category',
-                                  ),
-                                  items: categoryProvider.categories.map((cat) {
-                                    return DropdownMenuItem(
-                                      value: cat.id,
-                                      child: Text(cat.name),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    final category = categoryProvider.categories
-                                        .firstWhere((c) => c.id == value);
-                                    setState(() {
-                                      _selectedCategoryId = value;
-                                      _selectedCategoryName = category.name;
-                                    });
-                                  },
-                                  validator: (value) => value == null
-                                      ? 'Please select a category'
-                                      : null,
-                                );
-                              },
-                            ),
-                          ),
                         ],
+                      ),
+                      const SizedBox(height: AppDimensions.paddingM),
+
+                      // Multi-select Category Chips
+                      _buildSectionTitle('Categories *'),
+                      const SizedBox(height: AppDimensions.paddingS),
+                      Consumer<CategoryProvider>(
+                        builder: (context, categoryProvider, child) {
+                          if (categoryProvider.categories.isEmpty) {
+                            return const Text(
+                              'No categories available',
+                              style: TextStyle(color: AppColors.textSecondary),
+                            );
+                          }
+                          return Wrap(
+                            spacing: AppDimensions.paddingS,
+                            runSpacing: AppDimensions.paddingS,
+                            children: categoryProvider.categories.map((
+                              category,
+                            ) {
+                              final isSelected = _selectedCategoryIds.contains(
+                                category.id,
+                              );
+                              return FilterChip(
+                                label: Text(category.name),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      _selectedCategoryIds.add(category.id);
+                                      _selectedCategoryNames.add(category.name);
+                                    } else {
+                                      _selectedCategoryIds.remove(category.id);
+                                      _selectedCategoryNames.remove(
+                                        category.name,
+                                      );
+                                    }
+                                  });
+                                },
+                                selectedColor: AppColors.primaryColor
+                                    .withOpacity(0.2),
+                                checkmarkColor: AppColors.primaryColor,
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? AppColors.primaryColor
+                                      : AppColors.textPrimary,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
                       ),
                       const SizedBox(height: AppDimensions.paddingM),
 

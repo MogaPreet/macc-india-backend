@@ -7,6 +7,7 @@ import '../../providers/brand_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../models/product_model.dart';
 import '../../widgets/multi_image_uploader.dart';
+import '../../widgets/autocomplete_text_field.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/dimensions.dart';
 import '../../core/utils/validators.dart';
@@ -634,27 +635,27 @@ class _EditProductScreenState extends State<EditProductScreen> {
   }
 
   Widget _buildSpecsForm() {
+    final productProvider = context.read<ProductProvider>();
+
     return Column(
       children: [
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _processorController,
-                decoration: const InputDecoration(
-                  labelText: 'Processor',
-                  hintText: 'e.g., Apple M3 Pro',
-                ),
+                labelText: 'Processor',
+                hintText: 'e.g., Apple M3 Pro',
+                suggestions: productProvider.getUniqueProcessors(),
               ),
             ),
             const SizedBox(width: AppDimensions.paddingM),
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _ramController,
-                decoration: const InputDecoration(
-                  labelText: 'RAM',
-                  hintText: 'e.g., 16GB',
-                ),
+                labelText: 'RAM',
+                hintText: 'e.g., 16GB',
+                suggestions: productProvider.getUniqueRamValues(),
               ),
             ),
           ],
@@ -663,22 +664,20 @@ class _EditProductScreenState extends State<EditProductScreen> {
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _storageController,
-                decoration: const InputDecoration(
-                  labelText: 'Storage',
-                  hintText: 'e.g., 512GB SSD',
-                ),
+                labelText: 'Storage',
+                hintText: 'e.g., 512GB SSD',
+                suggestions: productProvider.getUniqueStorageValues(),
               ),
             ),
             const SizedBox(width: AppDimensions.paddingM),
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _screenController,
-                decoration: const InputDecoration(
-                  labelText: 'Screen',
-                  hintText: 'e.g., 14" Retina',
-                ),
+                labelText: 'Screen',
+                hintText: 'e.g., 14" Retina',
+                suggestions: productProvider.getUniqueScreenValues(),
               ),
             ),
           ],
@@ -687,22 +686,20 @@ class _EditProductScreenState extends State<EditProductScreen> {
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _graphicsController,
-                decoration: const InputDecoration(
-                  labelText: 'Graphics',
-                  hintText: 'e.g., 18-core GPU',
-                ),
+                labelText: 'Graphics',
+                hintText: 'e.g., 18-core GPU',
+                suggestions: productProvider.getUniqueGraphicsValues(),
               ),
             ),
             const SizedBox(width: AppDimensions.paddingM),
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _batteryController,
-                decoration: const InputDecoration(
-                  labelText: 'Battery',
-                  hintText: 'e.g., Up to 18 hours',
-                ),
+                labelText: 'Battery',
+                hintText: 'e.g., Up to 18 hours',
+                suggestions: productProvider.getUniqueBatteryValues(),
               ),
             ),
           ],
@@ -711,22 +708,20 @@ class _EditProductScreenState extends State<EditProductScreen> {
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _osController,
-                decoration: const InputDecoration(
-                  labelText: 'Operating System',
-                  hintText: 'e.g., macOS Sonoma',
-                ),
+                labelText: 'Operating System',
+                hintText: 'e.g., macOS Sonoma',
+                suggestions: productProvider.getUniqueOsValues(),
               ),
             ),
             const SizedBox(width: AppDimensions.paddingM),
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _portsController,
-                decoration: const InputDecoration(
-                  labelText: 'Ports',
-                  hintText: 'e.g., 3x Thunderbolt 4',
-                ),
+                labelText: 'Ports',
+                hintText: 'e.g., 3x Thunderbolt 4',
+                suggestions: productProvider.getUniquePortsValues(),
               ),
             ),
           ],

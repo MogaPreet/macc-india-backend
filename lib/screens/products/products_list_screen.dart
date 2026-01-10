@@ -18,12 +18,61 @@ class ProductsListScreen extends StatefulWidget {
 }
 
 class _ProductsListScreenState extends State<ProductsListScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _isSearchVisible = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductProvider>().fetchProducts();
     });
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase();
+    });
+  }
+
+  List<ProductModel> _filterProducts(List<ProductModel> products) {
+    if (_searchQuery.isEmpty) {
+      return products;
+    }
+    return products.where((product) {
+      // Search by name
+      if (product.name.toLowerCase().contains(_searchQuery)) {
+        return true;
+      }
+      // Search by brand
+      if (product.brandName.toLowerCase().contains(_searchQuery)) {
+        return true;
+      }
+      // Search by processor
+      if (product.specs.processor?.toLowerCase().contains(_searchQuery) ??
+          false) {
+        return true;
+      }
+      // Search by RAM
+      if (product.specs.ram?.toLowerCase().contains(_searchQuery) ?? false) {
+        return true;
+      }
+      // Search by storage
+      if (product.specs.storage?.toLowerCase().contains(_searchQuery) ??
+          false) {
+        return true;
+      }
+      return false;
+    }).toList();
   }
 
   Future<void> _deleteProduct(ProductModel product) async {
@@ -100,8 +149,40 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Products Management'),
+        title: _isSearchVisible
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Search by name, brand, processor, RAM...',
+                  hintStyle: TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 14,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                ),
+              )
+            : const Text('Products Management'),
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: Icon(_isSearchVisible ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                _isSearchVisible = !_isSearchVisible;
+                if (!_isSearchVisible) {
+                  _searchController.clear();
+                }
+              });
+            },
+            tooltip: _isSearchVisible ? 'Close Search' : 'Search Products',
+          ),
+        ],
       ),
       body: Consumer<ProductProvider>(
         builder: (context, provider, child) {
@@ -165,11 +246,47 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
             );
           }
 
+          final filteredProducts = _filterProducts(provider.products);
+
+          if (filteredProducts.isEmpty && _searchQuery.isNotEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.search_off, size: 64, color: AppColors.textMuted),
+                  const SizedBox(height: AppDimensions.paddingM),
+                  Text(
+                    'No products found',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: AppDimensions.paddingS),
+                  Text(
+                    'Try a different search term',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            );
+          }
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(AppDimensions.paddingL),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (_searchQuery.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: AppDimensions.paddingM,
+                    ),
+                    child: Text(
+                      'Found ${filteredProducts.length} product${filteredProducts.length != 1 ? 's' : ''}',
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -179,9 +296,9 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
                     crossAxisSpacing: AppDimensions.paddingL,
                     mainAxisSpacing: AppDimensions.paddingL,
                   ),
-                  itemCount: provider.products.length,
+                  itemCount: filteredProducts.length,
                   itemBuilder: (context, index) {
-                    final product = provider.products[index];
+                    final product = filteredProducts[index];
                     return _buildProductCard(product);
                   },
                 ),
@@ -346,6 +463,20 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
                             ),
                           ),
                           const SizedBox(width: 4),
+                          IconButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AddProductScreen(duplicateFrom: product),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.copy_outlined, size: 20),
+                            color: AppColors.primaryColor,
+                            tooltip: 'Duplicate Product',
+                          ),
                           IconButton(
                             onPressed: () => _toggleFeatured(product),
                             icon: Icon(

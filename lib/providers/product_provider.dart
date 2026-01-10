@@ -350,4 +350,86 @@ class ProductProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  // ============== Auto-Suggestion Methods ==============
+
+  /// Get unique processors from existing products
+  List<String> getUniqueProcessors() {
+    return _products
+        .map((p) => p.specs.processor)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique RAM values from existing products
+  List<String> getUniqueRamValues() {
+    return _products
+        .map((p) => p.specs.ram)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique storage values from existing products
+  List<String> getUniqueStorageValues() {
+    return _products
+        .map((p) => p.specs.storage)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique screen values from existing products
+  List<String> getUniqueScreenValues() {
+    return _products
+        .map((p) => p.specs.screen)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique graphics values from existing products
+  List<String> getUniqueGraphicsValues() {
+    return _products
+        .map((p) => p.specs.graphics)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique battery values from existing products
+  List<String> getUniqueBatteryValues() {
+    return _products
+        .map((p) => p.specs.battery)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique OS values from existing products
+  List<String> getUniqueOsValues() {
+    return _products
+        .map((p) => p.specs.os)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique ports values from existing products
+  List<String> getUniquePortsValues() {
+    return _products
+        .map((p) => p.specs.ports)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
 }

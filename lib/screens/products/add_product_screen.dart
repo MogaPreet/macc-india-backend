@@ -7,13 +7,17 @@ import '../../providers/brand_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../models/product_model.dart';
 import '../../widgets/multi_image_uploader.dart';
+import '../../widgets/autocomplete_text_field.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/dimensions.dart';
 import '../../core/utils/validators.dart';
 
 /// Screen for adding a new product
 class AddProductScreen extends StatefulWidget {
-  const AddProductScreen({super.key});
+  /// Optional product to duplicate from
+  final ProductModel? duplicateFrom;
+
+  const AddProductScreen({super.key, this.duplicateFrom});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -70,6 +74,59 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.initState();
     // Auto-generate slug when name changes
     _nameController.addListener(_autoGenerateSlug);
+
+    // Pre-fill from duplicate source if provided
+    final source = widget.duplicateFrom;
+    if (source != null) {
+      _nameController.text = '${source.name} (Copy)';
+      _slugController.text = '${source.slug}-copy';
+      _priceController.text = source.price.toStringAsFixed(0);
+      _originalPriceController.text =
+          source.originalPrice?.toStringAsFixed(0) ?? '';
+      _descriptionController.text = source.description ?? '';
+      _stockController.text = source.stock.toString();
+      _isFeatured = source.isFeatured;
+      _isActive = source.isActive;
+      _selectedBrandId = source.brandId;
+      _selectedBrandName = source.brandName;
+      _selectedCategoryIds = List.from(source.categoryIds);
+      _selectedCategoryNames = List.from(source.categoryNames);
+      _selectedCondition = source.condition;
+
+      // Specs
+      _processorController.text = source.specs.processor ?? '';
+      _ramController.text = source.specs.ram ?? '';
+      _storageController.text = source.specs.storage ?? '';
+      _screenController.text = source.specs.screen ?? '';
+      _graphicsController.text = source.specs.graphics ?? '';
+      _batteryController.text = source.specs.battery ?? '';
+      _osController.text = source.specs.os ?? '';
+      _portsController.text = source.specs.ports ?? '';
+      _weightController.text = source.specs.weight ?? '';
+
+      // Included items
+      if (source.includedItems.isNotEmpty) {
+        _includedItems.clear();
+        _includedItems.addAll(
+          source.includedItems.map(
+            (item) => IncludedItem(
+              name: item.name,
+              icon: item.icon,
+              included: item.included,
+            ),
+          ),
+        );
+      }
+
+      // Warranty
+      _warrantyDurationController.text = source.warranty?.duration ?? '';
+      _warrantyTypeController.text = source.warranty?.type ?? '';
+      _warrantyDescController.text = source.warranty?.description ?? '';
+
+      // YouTube URL
+      _youtubeUrlController.text = source.youtubeUrl ?? '';
+    }
+
     // Fetch brands and categories
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BrandProvider>().fetchBrands();
@@ -238,7 +295,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Product')),
+      appBar: AppBar(
+        title: Text(
+          widget.duplicateFrom != null ? 'Duplicate Product' : 'Add Product',
+        ),
+      ),
       body: Consumer<ProductProvider>(
         builder: (context, provider, child) {
           return Stack(
@@ -582,27 +643,27 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _buildSpecsForm() {
+    final productProvider = context.read<ProductProvider>();
+
     return Column(
       children: [
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _processorController,
-                decoration: const InputDecoration(
-                  labelText: 'Processor',
-                  hintText: 'e.g., Apple M3 Pro',
-                ),
+                labelText: 'Processor',
+                hintText: 'e.g., Apple M3 Pro',
+                suggestions: productProvider.getUniqueProcessors(),
               ),
             ),
             const SizedBox(width: AppDimensions.paddingM),
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _ramController,
-                decoration: const InputDecoration(
-                  labelText: 'RAM',
-                  hintText: 'e.g., 16GB',
-                ),
+                labelText: 'RAM',
+                hintText: 'e.g., 16GB',
+                suggestions: productProvider.getUniqueRamValues(),
               ),
             ),
           ],
@@ -611,22 +672,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _storageController,
-                decoration: const InputDecoration(
-                  labelText: 'Storage',
-                  hintText: 'e.g., 512GB SSD',
-                ),
+                labelText: 'Storage',
+                hintText: 'e.g., 512GB SSD',
+                suggestions: productProvider.getUniqueStorageValues(),
               ),
             ),
             const SizedBox(width: AppDimensions.paddingM),
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _screenController,
-                decoration: const InputDecoration(
-                  labelText: 'Screen',
-                  hintText: 'e.g., 14" Retina',
-                ),
+                labelText: 'Screen',
+                hintText: 'e.g., 14" Retina',
+                suggestions: productProvider.getUniqueScreenValues(),
               ),
             ),
           ],
@@ -635,22 +694,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _graphicsController,
-                decoration: const InputDecoration(
-                  labelText: 'Graphics',
-                  hintText: 'e.g., 18-core GPU',
-                ),
+                labelText: 'Graphics',
+                hintText: 'e.g., 18-core GPU',
+                suggestions: productProvider.getUniqueGraphicsValues(),
               ),
             ),
             const SizedBox(width: AppDimensions.paddingM),
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _batteryController,
-                decoration: const InputDecoration(
-                  labelText: 'Battery',
-                  hintText: 'e.g., Up to 18 hours',
-                ),
+                labelText: 'Battery',
+                hintText: 'e.g., Up to 18 hours',
+                suggestions: productProvider.getUniqueBatteryValues(),
               ),
             ),
           ],
@@ -659,22 +716,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _osController,
-                decoration: const InputDecoration(
-                  labelText: 'Operating System',
-                  hintText: 'e.g., macOS Sonoma',
-                ),
+                labelText: 'Operating System',
+                hintText: 'e.g., macOS Sonoma',
+                suggestions: productProvider.getUniqueOsValues(),
               ),
             ),
             const SizedBox(width: AppDimensions.paddingM),
             Expanded(
-              child: TextFormField(
+              child: AutocompleteTextField(
                 controller: _portsController,
-                decoration: const InputDecoration(
-                  labelText: 'Ports',
-                  hintText: 'e.g., 3x Thunderbolt 4',
-                ),
+                labelText: 'Ports',
+                hintText: 'e.g., 3x Thunderbolt 4',
+                suggestions: productProvider.getUniquePortsValues(),
               ),
             ),
           ],

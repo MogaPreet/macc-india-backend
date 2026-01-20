@@ -1,9 +1,17 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:excel/excel.dart' as xl;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:universal_html/html.dart' as html;
 import '../../providers/product_provider.dart';
+import '../../providers/category_provider.dart';
 import '../../models/product_model.dart';
+import '../../models/category_model.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/dimensions.dart';
 import 'add_product_screen.dart';
@@ -145,6 +153,301 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
     }
   }
 
+  /// Show export options dialog
+  Future<void> _showExportDialog() async {
+    final categoryProvider = context.read<CategoryProvider>();
+
+    // Fetch categories if not already loaded
+    if (categoryProvider.categories.isEmpty) {
+      await categoryProvider.fetchCategories();
+    }
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => _ExportDialog(
+        categories: categoryProvider.categories,
+        onExport: (String? categoryId) => _exportProducts(categoryId),
+      ),
+    );
+  }
+
+  /// Export products to Excel
+  Future<void> _exportProducts(String? categoryId) async {
+    final provider = context.read<ProductProvider>();
+
+    // Get products based on category filter
+    List<ProductModel> productsToExport;
+    String categoryName = 'All';
+
+    if (categoryId == null) {
+      // Export all products
+      productsToExport = provider.products;
+    } else {
+      // Export products of selected category
+      productsToExport = provider.products
+          .where((p) => p.categoryIds.contains(categoryId))
+          .toList();
+
+      // Get category name for filename
+      final categoryProvider = context.read<CategoryProvider>();
+      final category = categoryProvider.categories.firstWhere(
+        (c) => c.id == categoryId,
+        orElse: () => CategoryModel(
+          id: '',
+          name: 'Unknown',
+          slug: '',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      categoryName = category.name;
+    }
+
+    if (productsToExport.isEmpty) {
+      Fluttertoast.showToast(
+        msg: 'No products to export',
+        backgroundColor: AppColors.warningColor,
+      );
+      return;
+    }
+
+    try {
+      // Show loading indicator
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) =>
+              const Center(child: CircularProgressIndicator()),
+        );
+      }
+
+      // Create Excel workbook
+      final excel = xl.Excel.createExcel();
+      final sheetName = 'Products';
+      final sheet = excel[sheetName];
+
+      // Remove default sheet if exists
+      if (excel.getDefaultSheet() != sheetName) {
+        excel.delete(excel.getDefaultSheet()!);
+      }
+
+      // Header style
+      final headerStyle = xl.CellStyle(
+        bold: true,
+        backgroundColorHex: xl.ExcelColor.fromHexString('#4CAF50'),
+        fontColorHex: xl.ExcelColor.white,
+        horizontalAlign: xl.HorizontalAlign.Center,
+      );
+
+      // Add headers
+      final headers = [
+        'S.No',
+        'Name',
+        'Brand',
+        'Categories',
+        'Condition',
+        'Price (₹)',
+        'Original Price (₹)',
+        'Discount %',
+        'Stock',
+        'Status',
+        'Featured',
+        'Processor',
+        'RAM',
+        'Storage',
+        'Screen',
+        'Graphics',
+        'Battery',
+        'OS',
+        'Warranty',
+        'Main Image URL',
+        'Created At',
+      ];
+
+      for (var i = 0; i < headers.length; i++) {
+        final cell = sheet.cell(
+          xl.CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
+        );
+        cell.value = xl.TextCellValue(headers[i]);
+        cell.cellStyle = headerStyle;
+      }
+
+      // Add product data
+      for (var rowIndex = 0; rowIndex < productsToExport.length; rowIndex++) {
+        final product = productsToExport[rowIndex];
+        final row = rowIndex + 1;
+
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+            .value = xl.IntCellValue(
+          rowIndex + 1,
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.name,
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.brandName,
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.categoryNames.join(', '),
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.condition,
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: row))
+            .value = xl.DoubleCellValue(
+          product.price,
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: row))
+            .value = xl.DoubleCellValue(
+          product.originalPrice ?? 0,
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: row))
+            .value = xl.IntCellValue(
+          product.discountPercentage,
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: row))
+            .value = xl.IntCellValue(
+          product.stock,
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 9, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.isActive ? 'Active' : 'Inactive',
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 10, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.isFeatured ? 'Yes' : 'No',
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 11, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.specs.processor ?? '',
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 12, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.specs.ram ?? '',
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.specs.storage ?? '',
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 14, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.specs.screen ?? '',
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 15, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.specs.graphics ?? '',
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 16, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.specs.battery ?? '',
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 17, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.specs.os ?? '',
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 18, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.warranty?.duration ?? '',
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 19, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.mainImage,
+        );
+        sheet
+            .cell(xl.CellIndex.indexByColumnRow(columnIndex: 20, rowIndex: row))
+            .value = xl.TextCellValue(
+          product.createdAt.toString().split(' ')[0],
+        );
+      }
+
+      // Auto-fit column widths (approximate)
+      for (var i = 0; i < headers.length; i++) {
+        sheet.setColumnWidth(i, 15);
+      }
+      sheet.setColumnWidth(1, 40); // Name column wider
+      sheet.setColumnWidth(19, 50); // URL column wider
+
+      // Save file
+      final bytes = excel.encode();
+      if (bytes == null) throw Exception('Failed to encode Excel file');
+
+      final sanitizedCategoryName = categoryName.replaceAll(
+        RegExp(r'[^\w\s-]'),
+        '',
+      );
+      final fileName =
+          'Products_${sanitizedCategoryName}_${DateTime.now().millisecondsSinceEpoch}.xlsx';
+
+      if (kIsWeb) {
+        // Web: Use browser download
+        final blob = html.Blob([
+          bytes,
+        ], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        final _ = html.AnchorElement(href: url)
+          ..setAttribute('download', fileName)
+          ..click();
+        html.Url.revokeObjectUrl(url);
+      } else {
+        // Native: Save to file system
+        final directory = await getApplicationDocumentsDirectory();
+        final filePath = '${directory.path}/$fileName';
+        final file = File(filePath);
+        await file.writeAsBytes(bytes);
+        // Open the file
+        await OpenFilex.open(filePath);
+      }
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Show success message
+      Fluttertoast.showToast(
+        msg: 'Exported ${productsToExport.length} products to Excel',
+        backgroundColor: AppColors.successColor,
+      );
+    } catch (e) {
+      // Close loading dialog if open
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      Fluttertoast.showToast(
+        msg: 'Export failed: $e',
+        backgroundColor: AppColors.errorColor,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,6 +473,11 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
             : const Text('Products Management'),
         automaticallyImplyLeading: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.file_download_outlined),
+            onPressed: _showExportDialog,
+            tooltip: 'Export Products',
+          ),
           IconButton(
             icon: Icon(_isSearchVisible ? Icons.close : Icons.search),
             onPressed: () {
@@ -588,5 +896,168 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
       default:
         return AppColors.textMuted;
     }
+  }
+}
+
+/// Export dialog for selecting category filter
+class _ExportDialog extends StatefulWidget {
+  final List<CategoryModel> categories;
+  final Function(String?) onExport;
+
+  const _ExportDialog({required this.categories, required this.onExport});
+
+  @override
+  State<_ExportDialog> createState() => _ExportDialogState();
+}
+
+class _ExportDialogState extends State<_ExportDialog> {
+  String? _selectedCategoryId;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.file_download_outlined, color: AppColors.primaryColor),
+          const SizedBox(width: 12),
+          const Text('Export Products'),
+        ],
+      ),
+      content: SizedBox(
+        width: 350,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select category to export:',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+
+            // All Products Option
+            _buildExportOption(
+              title: 'All Products',
+              subtitle: 'Export all products from all categories',
+              icon: Icons.all_inclusive,
+              isSelected: _selectedCategoryId == null,
+              onTap: () {
+                setState(() {
+                  _selectedCategoryId = null;
+                });
+              },
+            ),
+
+            const Divider(height: 24),
+
+            // Category Options
+            Text(
+              'Or select a specific category:',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 250),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: widget.categories.map((category) {
+                    return _buildExportOption(
+                      title: category.name,
+                      subtitle: category.isActive ? 'Active' : 'Inactive',
+                      icon: Icons.category_outlined,
+                      isSelected: _selectedCategoryId == category.id,
+                      onTap: () {
+                        setState(() {
+                          _selectedCategoryId = category.id;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton.icon(
+          onPressed: () {
+            Navigator.pop(context);
+            widget.onExport(_selectedCategoryId);
+          },
+          icon: const Icon(Icons.file_download, size: 18),
+          label: const Text('Export'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExportOption({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primaryColor.withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryColor : AppColors.borderColor,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppColors.primaryColor : AppColors.textMuted,
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: isSelected
+                          ? AppColors.primaryColor
+                          : AppColors.textPrimary,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle, color: AppColors.primaryColor, size: 20),
+          ],
+        ),
+      ),
+    );
   }
 }

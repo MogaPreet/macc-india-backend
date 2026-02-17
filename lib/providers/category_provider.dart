@@ -67,6 +67,7 @@ class CategoryProvider extends ChangeNotifier {
     String? icon,
     String? color,
     Uint8List? imageFile,
+    String? gifUrl,
     int? order,
     bool isActive = true,
   }) async {
@@ -101,6 +102,7 @@ class CategoryProvider extends ChangeNotifier {
         icon: icon,
         color: color,
         image: imageUrl,
+        gifUrl: gifUrl,
         order: order,
         isActive: isActive,
         createdAt: now,
@@ -133,6 +135,7 @@ class CategoryProvider extends ChangeNotifier {
     String? color,
     Uint8List? newImageFile,
     String? existingImageUrl,
+    String? gifUrl,
     int? order,
     bool? isActive,
   }) async {
@@ -171,6 +174,7 @@ class CategoryProvider extends ChangeNotifier {
         'icon': icon,
         'color': color,
         'image': imageUrl,
+        'gifUrl': gifUrl,
         'order': order,
         'updatedAt': DateTime.now(),
       };

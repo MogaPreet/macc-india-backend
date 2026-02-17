@@ -42,6 +42,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   List<String> _selectedCategoryIds = [];
   List<String> _selectedCategoryNames = [];
   String _selectedCondition = ProductCondition.likeNew;
+  String _selectedProductType = ProductType.laptop;
 
   // Specs controllers
   final _processorController = TextEditingController();
@@ -53,6 +54,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _osController = TextEditingController();
   final _portsController = TextEditingController();
   final _weightController = TextEditingController();
+
+  // Monitor-specific specs controllers
+  final _panelTypeController = TextEditingController();
+  final _resolutionController = TextEditingController();
+  final _refreshRateController = TextEditingController();
+  final _responseTimeController = TextEditingController();
+  final _displaySizeController = TextEditingController();
 
   // Included items
   late final List<IncludedItem> _includedItems = [
@@ -92,6 +100,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _selectedCategoryIds = List.from(source.categoryIds);
       _selectedCategoryNames = List.from(source.categoryNames);
       _selectedCondition = source.condition;
+      _selectedProductType = source.productType;
 
       // Specs
       _processorController.text = source.specs.processor ?? '';
@@ -103,6 +112,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _osController.text = source.specs.os ?? '';
       _portsController.text = source.specs.ports ?? '';
       _weightController.text = source.specs.weight ?? '';
+
+      // Monitor specs
+      _panelTypeController.text = source.specs.panelType ?? '';
+      _resolutionController.text = source.specs.resolution ?? '';
+      _refreshRateController.text = source.specs.refreshRate ?? '';
+      _responseTimeController.text = source.specs.responseTime ?? '';
+      _displaySizeController.text = source.specs.displaySize ?? '';
 
       // Included items
       if (source.includedItems.isNotEmpty) {
@@ -167,6 +183,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _osController.dispose();
     _portsController.dispose();
     _weightController.dispose();
+    _panelTypeController.dispose();
+    _resolutionController.dispose();
+    _refreshRateController.dispose();
+    _responseTimeController.dispose();
+    _displaySizeController.dispose();
     _warrantyDurationController.dispose();
     _warrantyTypeController.dispose();
     _warrantyDescController.dispose();
@@ -202,6 +223,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
           : null,
       weight: _weightController.text.trim().isNotEmpty
           ? _weightController.text.trim()
+          : null,
+      panelType: _panelTypeController.text.trim().isNotEmpty
+          ? _panelTypeController.text.trim()
+          : null,
+      resolution: _resolutionController.text.trim().isNotEmpty
+          ? _resolutionController.text.trim()
+          : null,
+      refreshRate: _refreshRateController.text.trim().isNotEmpty
+          ? _refreshRateController.text.trim()
+          : null,
+      responseTime: _responseTimeController.text.trim().isNotEmpty
+          ? _responseTimeController.text.trim()
+          : null,
+      displaySize: _displaySizeController.text.trim().isNotEmpty
+          ? _displaySizeController.text.trim()
           : null,
     );
   }
@@ -262,6 +298,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ? double.parse(_originalPriceController.text.trim())
           : null,
       condition: _selectedCondition,
+      productType: _selectedProductType,
       stock: int.tryParse(_stockController.text.trim()) ?? 1,
       isFeatured: _isFeatured,
       isActive: _isActive,
@@ -311,6 +348,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _buildSectionTitle('Product Type'),
+                      const SizedBox(height: AppDimensions.paddingM),
+                      _buildProductTypeSelector(),
+                      const SizedBox(height: AppDimensions.paddingL),
+
                       _buildSectionTitle('Product Images *'),
                       const SizedBox(height: AppDimensions.paddingM),
                       MultiImageUploader(
@@ -523,10 +565,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       const SizedBox(height: AppDimensions.paddingM),
                       _buildSpecsForm(),
 
-                      const SizedBox(height: AppDimensions.paddingXL),
-                      _buildSectionTitle('Included Items'),
-                      const SizedBox(height: AppDimensions.paddingM),
-                      _buildIncludedItemsForm(),
+                      if (_selectedProductType == ProductType.laptop) ...[
+                        const SizedBox(height: AppDimensions.paddingXL),
+                        _buildSectionTitle('Included Items'),
+                        const SizedBox(height: AppDimensions.paddingM),
+                        _buildIncludedItemsForm(),
+                      ],
 
                       const SizedBox(height: AppDimensions.paddingXL),
                       _buildSectionTitle('Warranty (Optional)'),
@@ -642,8 +686,88 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
+  Widget _buildProductTypeSelector() {
+    return Row(
+      children: ProductType.values.map((type) {
+        final isSelected = _selectedProductType == type;
+        final IconData icon;
+        switch (type) {
+          case ProductType.laptop:
+            icon = Icons.laptop_mac;
+            break;
+          case ProductType.system:
+            icon = Icons.desktop_windows;
+            break;
+          case ProductType.monitor:
+            icon = Icons.monitor;
+            break;
+          default:
+            icon = Icons.laptop_mac;
+        }
+
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedProductType = type;
+                });
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primaryColor
+                      : AppColors.surfaceColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.primaryColor
+                        : AppColors.borderColor,
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      icon,
+                      color: isSelected
+                          ? Colors.white
+                          : AppColors.textSecondary,
+                      size: 28,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      ProductType.label(type),
+                      style: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : AppColors.textSecondary,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   Widget _buildSpecsForm() {
+    if (_selectedProductType == ProductType.monitor) {
+      return _buildMonitorSpecsForm();
+    }
+
     final productProvider = context.read<ProductProvider>();
+    final isSystem = _selectedProductType == ProductType.system;
 
     return Column(
       children: [
@@ -679,15 +803,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 suggestions: productProvider.getUniqueStorageValues(),
               ),
             ),
-            const SizedBox(width: AppDimensions.paddingM),
-            Expanded(
-              child: AutocompleteTextField(
-                controller: _screenController,
-                labelText: 'Screen',
-                hintText: 'e.g., 14" Retina',
-                suggestions: productProvider.getUniqueScreenValues(),
+            if (!isSystem) ...[
+              const SizedBox(width: AppDimensions.paddingM),
+              Expanded(
+                child: AutocompleteTextField(
+                  controller: _screenController,
+                  labelText: 'Screen',
+                  hintText: 'e.g., 14" Retina',
+                  suggestions: productProvider.getUniqueScreenValues(),
+                ),
               ),
-            ),
+            ],
           ],
         ),
         const SizedBox(height: AppDimensions.paddingM),
@@ -701,15 +827,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 suggestions: productProvider.getUniqueGraphicsValues(),
               ),
             ),
-            const SizedBox(width: AppDimensions.paddingM),
-            Expanded(
-              child: AutocompleteTextField(
-                controller: _batteryController,
-                labelText: 'Battery',
-                hintText: 'e.g., Up to 18 hours',
-                suggestions: productProvider.getUniqueBatteryValues(),
+            if (!isSystem) ...[
+              const SizedBox(width: AppDimensions.paddingM),
+              Expanded(
+                child: AutocompleteTextField(
+                  controller: _batteryController,
+                  labelText: 'Battery',
+                  hintText: 'e.g., Up to 18 hours',
+                  suggestions: productProvider.getUniqueBatteryValues(),
+                ),
               ),
-            ),
+            ],
           ],
         ),
         const SizedBox(height: AppDimensions.paddingM),
@@ -740,6 +868,88 @@ class _AddProductScreenState extends State<AddProductScreen> {
           decoration: const InputDecoration(
             labelText: 'Weight',
             hintText: 'e.g., 1.6 kg',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMonitorSpecsForm() {
+    final productProvider = context.read<ProductProvider>();
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _displaySizeController,
+                labelText: 'Display Size',
+                hintText: 'e.g., 27 inch',
+                suggestions: productProvider.getUniqueDisplaySizeValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _resolutionController,
+                labelText: 'Resolution',
+                hintText: 'e.g., 3840 x 2160 (4K)',
+                suggestions: productProvider.getUniqueResolutionValues(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _panelTypeController,
+                labelText: 'Panel Type',
+                hintText: 'e.g., IPS / VA / OLED',
+                suggestions: productProvider.getUniquePanelTypeValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _refreshRateController,
+                labelText: 'Refresh Rate',
+                hintText: 'e.g., 144Hz',
+                suggestions: productProvider.getUniqueRefreshRateValues(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _responseTimeController,
+                labelText: 'Response Time',
+                hintText: 'e.g., 1ms GTG',
+                suggestions: productProvider.getUniqueResponseTimeValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _portsController,
+                labelText: 'Ports',
+                hintText: 'e.g., HDMI, DP, USB-C',
+                suggestions: productProvider.getUniquePortsValues(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        TextFormField(
+          controller: _weightController,
+          decoration: const InputDecoration(
+            labelText: 'Weight',
+            hintText: 'e.g., 5.2 kg',
           ),
         ),
       ],

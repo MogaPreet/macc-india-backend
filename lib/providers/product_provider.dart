@@ -36,6 +36,10 @@ class ProductProvider extends ChangeNotifier {
   List<ProductModel> getProductsByBrand(String brandId) =>
       _products.where((p) => p.brandId == brandId && p.isActive).toList();
 
+  /// Get products by type (laptop, system, monitor)
+  List<ProductModel> getProductsByType(String productType) =>
+      _products.where((p) => p.productType == productType).toList();
+
   /// Fetch all products
   Future<void> fetchProducts() async {
     _isLoading = true;
@@ -87,6 +91,7 @@ class ProductProvider extends ChangeNotifier {
     required double price,
     double? originalPrice,
     required String condition,
+    String productType = ProductType.laptop,
     int stock = 1,
     bool isFeatured = false,
     bool isActive = true,
@@ -138,6 +143,7 @@ class ProductProvider extends ChangeNotifier {
         price: price,
         originalPrice: originalPrice,
         condition: condition,
+        productType: productType,
         stock: stock,
         isFeatured: isFeatured,
         isActive: isActive,
@@ -180,6 +186,7 @@ class ProductProvider extends ChangeNotifier {
     required double price,
     double? originalPrice,
     required String condition,
+    String productType = ProductType.laptop,
     int stock = 1,
     required bool isFeatured,
     required bool isActive,
@@ -230,6 +237,7 @@ class ProductProvider extends ChangeNotifier {
         'price': price,
         'originalPrice': originalPrice,
         'condition': condition,
+        'productType': productType,
         'stock': stock,
         'isFeatured': isFeatured,
         'isActive': isActive,
@@ -427,6 +435,58 @@ class ProductProvider extends ChangeNotifier {
   List<String> getUniquePortsValues() {
     return _products
         .map((p) => p.specs.ports)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  // ============== Monitor Spec Suggestions ==============
+
+  /// Get unique panel type values from existing products
+  List<String> getUniquePanelTypeValues() {
+    return _products
+        .map((p) => p.specs.panelType)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique resolution values from existing products
+  List<String> getUniqueResolutionValues() {
+    return _products
+        .map((p) => p.specs.resolution)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique refresh rate values from existing products
+  List<String> getUniqueRefreshRateValues() {
+    return _products
+        .map((p) => p.specs.refreshRate)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique response time values from existing products
+  List<String> getUniqueResponseTimeValues() {
+    return _products
+        .map((p) => p.specs.responseTime)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique display size values from existing products
+  List<String> getUniqueDisplaySizeValues() {
+    return _products
+        .map((p) => p.specs.displaySize)
         .where((s) => s != null && s.isNotEmpty)
         .cast<String>()
         .toSet()

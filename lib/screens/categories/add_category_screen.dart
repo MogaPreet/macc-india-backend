@@ -24,6 +24,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   final _iconController = TextEditingController();
   final _colorController = TextEditingController();
   final _orderController = TextEditingController();
+  final _gifUrlController = TextEditingController();
   bool _isActive = true;
 
   Uint8List? _imageBytes;
@@ -56,6 +57,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
     _iconController.dispose();
     _colorController.dispose();
     _orderController.dispose();
+    _gifUrlController.dispose();
     super.dispose();
   }
 
@@ -76,6 +78,9 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
           ? _colorController.text.trim()
           : null,
       imageFile: _imageBytes,
+      gifUrl: _gifUrlController.text.trim().isNotEmpty
+          ? _gifUrlController.text.trim()
+          : null,
       order: _orderController.text.isNotEmpty
           ? int.tryParse(_orderController.text)
           : null,
@@ -190,6 +195,18 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: AppDimensions.paddingM),
+
+                          TextFormField(
+                            controller: _gifUrlController,
+                            decoration: const InputDecoration(
+                              labelText: 'GIF URL (Optional)',
+                              hintText:
+                                  'e.g., https://example.com/animation.gif',
+                              helperText:
+                                  'URL for animated GIF on the frontend',
+                            ),
                           ),
                           const SizedBox(height: AppDimensions.paddingM),
 

@@ -12,6 +12,13 @@ class ProductSpecs {
   final String? ports;
   final String? weight;
 
+  // Monitor-specific fields
+  final String? panelType;
+  final String? resolution;
+  final String? refreshRate;
+  final String? responseTime;
+  final String? displaySize;
+
   ProductSpecs({
     this.processor,
     this.ram,
@@ -22,6 +29,11 @@ class ProductSpecs {
     this.os,
     this.ports,
     this.weight,
+    this.panelType,
+    this.resolution,
+    this.refreshRate,
+    this.responseTime,
+    this.displaySize,
   });
 
   factory ProductSpecs.fromMap(Map<String, dynamic>? data) {
@@ -36,6 +48,11 @@ class ProductSpecs {
       os: data['os'],
       ports: data['ports'],
       weight: data['weight'],
+      panelType: data['panelType'],
+      resolution: data['resolution'],
+      refreshRate: data['refreshRate'],
+      responseTime: data['responseTime'],
+      displaySize: data['displaySize'],
     );
   }
 
@@ -50,6 +67,11 @@ class ProductSpecs {
       'os': os,
       'ports': ports,
       'weight': weight,
+      'panelType': panelType,
+      'resolution': resolution,
+      'refreshRate': refreshRate,
+      'responseTime': responseTime,
+      'displaySize': displaySize,
     };
   }
 
@@ -63,6 +85,11 @@ class ProductSpecs {
     String? os,
     String? ports,
     String? weight,
+    String? panelType,
+    String? resolution,
+    String? refreshRate,
+    String? responseTime,
+    String? displaySize,
   }) {
     return ProductSpecs(
       processor: processor ?? this.processor,
@@ -74,6 +101,11 @@ class ProductSpecs {
       os: os ?? this.os,
       ports: ports ?? this.ports,
       weight: weight ?? this.weight,
+      panelType: panelType ?? this.panelType,
+      resolution: resolution ?? this.resolution,
+      refreshRate: refreshRate ?? this.refreshRate,
+      responseTime: responseTime ?? this.responseTime,
+      displaySize: displaySize ?? this.displaySize,
     );
   }
 
@@ -87,7 +119,12 @@ class ProductSpecs {
       battery != null ||
       os != null ||
       ports != null ||
-      weight != null;
+      weight != null ||
+      panelType != null ||
+      resolution != null ||
+      refreshRate != null ||
+      responseTime != null ||
+      displaySize != null;
 }
 
 /// Included item model (accessories, chargers, etc.)
@@ -156,6 +193,29 @@ class ProductWarranty {
       duration != null || type != null || description != null;
 }
 
+/// Product type enum values
+class ProductType {
+  static const String laptop = 'laptop';
+  static const String system = 'system';
+  static const String monitor = 'monitor';
+
+  static List<String> get values => [laptop, system, monitor];
+
+  /// Get display label for product type
+  static String label(String type) {
+    switch (type) {
+      case laptop:
+        return 'Laptop';
+      case system:
+        return 'System';
+      case monitor:
+        return 'Monitor (LED)';
+      default:
+        return 'Laptop';
+    }
+  }
+}
+
 /// Product condition enum values
 class ProductCondition {
   static const String likeNew = 'Like New';
@@ -192,6 +252,7 @@ class ProductModel {
   final double price;
   final double? originalPrice;
   final String condition;
+  final String productType;
   final int stock;
   final bool isFeatured;
   final bool isActive;
@@ -215,6 +276,7 @@ class ProductModel {
     required this.price,
     this.originalPrice,
     required this.condition,
+    this.productType = ProductType.laptop,
     this.stock = 1,
     this.isFeatured = false,
     this.isActive = true,
@@ -293,6 +355,7 @@ class ProductModel {
       price: (data['price'] ?? 0).toDouble(),
       originalPrice: data['originalPrice']?.toDouble(),
       condition: data['condition'] ?? ProductCondition.good,
+      productType: data['productType'] ?? ProductType.laptop,
       stock: data['stock'] ?? 1,
       isFeatured: data['isFeatured'] ?? false,
       isActive: data['isActive'] ?? true,
@@ -321,6 +384,7 @@ class ProductModel {
       'price': price,
       'originalPrice': originalPrice,
       'condition': condition,
+      'productType': productType,
       'stock': stock,
       'isFeatured': isFeatured,
       'isActive': isActive,
@@ -347,6 +411,7 @@ class ProductModel {
     double? price,
     double? originalPrice,
     String? condition,
+    String? productType,
     int? stock,
     bool? isFeatured,
     bool? isActive,
@@ -370,6 +435,7 @@ class ProductModel {
       price: price ?? this.price,
       originalPrice: originalPrice ?? this.originalPrice,
       condition: condition ?? this.condition,
+      productType: productType ?? this.productType,
       stock: stock ?? this.stock,
       isFeatured: isFeatured ?? this.isFeatured,
       isActive: isActive ?? this.isActive,

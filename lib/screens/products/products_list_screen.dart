@@ -29,6 +29,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isSearchVisible = false;
+  String? _selectedTypeFilter;
 
   @override
   void initState() {
@@ -53,34 +54,33 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
   }
 
   List<ProductModel> _filterProducts(List<ProductModel> products) {
-    if (_searchQuery.isEmpty) {
-      return products;
+    var filtered = products;
+
+    // Filter by product type
+    if (_selectedTypeFilter != null) {
+      filtered = filtered
+          .where((p) => p.productType == _selectedTypeFilter)
+          .toList();
     }
-    return products.where((product) {
-      // Search by name
-      if (product.name.toLowerCase().contains(_searchQuery)) {
-        return true;
-      }
-      // Search by brand
-      if (product.brandName.toLowerCase().contains(_searchQuery)) {
-        return true;
-      }
-      // Search by processor
-      if (product.specs.processor?.toLowerCase().contains(_searchQuery) ??
-          false) {
-        return true;
-      }
-      // Search by RAM
-      if (product.specs.ram?.toLowerCase().contains(_searchQuery) ?? false) {
-        return true;
-      }
-      // Search by storage
-      if (product.specs.storage?.toLowerCase().contains(_searchQuery) ??
-          false) {
-        return true;
-      }
-      return false;
-    }).toList();
+
+    // Filter by search query
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((product) {
+        if (product.name.toLowerCase().contains(_searchQuery)) return true;
+        if (product.brandName.toLowerCase().contains(_searchQuery)) return true;
+        if (product.specs.processor?.toLowerCase().contains(_searchQuery) ??
+            false)
+          return true;
+        if (product.specs.ram?.toLowerCase().contains(_searchQuery) ?? false)
+          return true;
+        if (product.specs.storage?.toLowerCase().contains(_searchQuery) ??
+            false)
+          return true;
+        return false;
+      }).toList();
+    }
+
+    return filtered;
   }
 
   Future<void> _deleteProduct(ProductModel product) async {
@@ -582,7 +582,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_searchQuery.isNotEmpty)
+                if (_searchQuery.isNotEmpty || _selectedTypeFilter != null)
                   Padding(
                     padding: const EdgeInsets.only(
                       bottom: AppDimensions.paddingM,
@@ -595,6 +595,27 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
                       ),
                     ),
                   ),
+
+                // Product type filter chips
+                Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: AppDimensions.paddingM,
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildTypeFilterChip('All', null),
+                        const SizedBox(width: 8),
+                        _buildTypeFilterChip('Laptop', ProductType.laptop),
+                        const SizedBox(width: 8),
+                        _buildTypeFilterChip('System', ProductType.system),
+                        const SizedBox(width: 8),
+                        _buildTypeFilterChip('Monitor', ProductType.monitor),
+                      ],
+                    ),
+                  ),
+                ),
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -821,8 +842,19 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
             left: 8,
             child: Row(
               children: [
+                _buildBadge(
+                  ProductType.label(product.productType).toUpperCase(),
+                  product.productType == ProductType.monitor
+                      ? Colors.deepPurple
+                      : product.productType == ProductType.system
+                      ? Colors.teal
+                      : AppColors.primaryColor,
+                ),
                 if (product.isFeatured)
-                  _buildBadge('FEATURED', Colors.amber.shade700),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: _buildBadge('FEATURED', Colors.amber.shade700),
+                  ),
                 if (!product.inStock)
                   Padding(
                     padding: const EdgeInsets.only(left: 4),
@@ -879,6 +911,26 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
           fontSize: 9,
           fontWeight: FontWeight.bold,
         ),
+      ),
+    );
+  }
+
+  Widget _buildTypeFilterChip(String label, String? type) {
+    final isSelected = _selectedTypeFilter == type;
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) {
+        setState(() {
+          _selectedTypeFilter = type;
+        });
+      },
+      selectedColor: AppColors.primaryColor.withOpacity(0.2),
+      checkmarkColor: AppColors.primaryColor,
+      labelStyle: TextStyle(
+        color: isSelected ? AppColors.primaryColor : AppColors.textPrimary,
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        fontSize: 13,
       ),
     );
   }

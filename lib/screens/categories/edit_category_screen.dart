@@ -26,6 +26,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
   late TextEditingController _iconController;
   late TextEditingController _colorController;
   late TextEditingController _orderController;
+  late TextEditingController _gifUrlController;
   late bool _isActive;
 
   Uint8List? _newImageBytes;
@@ -40,6 +41,9 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
     _orderController = TextEditingController(
       text: widget.category.order?.toString() ?? '',
     );
+    _gifUrlController = TextEditingController(
+      text: widget.category.gifUrl ?? '',
+    );
     _isActive = widget.category.isActive;
   }
 
@@ -50,6 +54,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
     _iconController.dispose();
     _colorController.dispose();
     _orderController.dispose();
+    _gifUrlController.dispose();
     super.dispose();
   }
 
@@ -72,6 +77,9 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
           : null,
       newImageFile: _newImageBytes,
       existingImageUrl: widget.category.image,
+      gifUrl: _gifUrlController.text.trim().isNotEmpty
+          ? _gifUrlController.text.trim()
+          : null,
       order: _orderController.text.isNotEmpty
           ? int.tryParse(_orderController.text)
           : null,
@@ -187,6 +195,18 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: AppDimensions.paddingM),
+
+                          TextFormField(
+                            controller: _gifUrlController,
+                            decoration: const InputDecoration(
+                              labelText: 'GIF URL (Optional)',
+                              hintText:
+                                  'e.g., https://example.com/animation.gif',
+                              helperText:
+                                  'URL for animated GIF on the frontend',
+                            ),
                           ),
                           const SizedBox(height: AppDimensions.paddingM),
 

@@ -8,6 +8,7 @@ class CategoryModel {
   final String? icon;
   final String? color;
   final String? image;
+  final String? gifUrl;
   final int? order;
   final bool isActive;
   final DateTime createdAt;
@@ -20,6 +21,7 @@ class CategoryModel {
     this.icon,
     this.color,
     this.image,
+    this.gifUrl,
     this.order,
     this.isActive = true,
     required this.createdAt,
@@ -36,6 +38,7 @@ class CategoryModel {
       icon: data['icon'],
       color: data['color'],
       image: data['image'],
+      gifUrl: data['gifUrl'],
       order: data['order'],
       isActive: data['isActive'] ?? true,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -51,6 +54,7 @@ class CategoryModel {
       'icon': icon,
       'color': color,
       'image': image,
+      'gifUrl': gifUrl,
       'order': order,
       'isActive': isActive,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -66,6 +70,7 @@ class CategoryModel {
     String? icon,
     String? color,
     String? image,
+    String? gifUrl,
     int? order,
     bool? isActive,
     DateTime? createdAt,
@@ -78,6 +83,7 @@ class CategoryModel {
       icon: icon ?? this.icon,
       color: color ?? this.color,
       image: image ?? this.image,
+      gifUrl: gifUrl ?? this.gifUrl,
       order: order ?? this.order,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,

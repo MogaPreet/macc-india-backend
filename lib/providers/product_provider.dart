@@ -492,4 +492,56 @@ class ProductProvider extends ChangeNotifier {
         .toSet()
         .toList();
   }
+
+  // ============== Phone/iPad Spec Suggestions ==============
+
+  /// Get unique chipset values from existing products
+  List<String> getUniqueChipsetValues() {
+    return _products
+        .map((p) => p.specs.chipset)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique camera values from existing products
+  List<String> getUniqueCameraValues() {
+    return _products
+        .map((p) => p.specs.camera)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique SIM type values from existing products
+  List<String> getUniqueSimTypeValues() {
+    return _products
+        .map((p) => p.specs.simType)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique connectivity values from existing products
+  List<String> getUniqueConnectivityValues() {
+    return _products
+        .map((p) => p.specs.connectivity)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
+
+  /// Get unique screen size values from existing products
+  List<String> getUniqueScreenSizeValues() {
+    return _products
+        .map((p) => p.specs.screenSize)
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList();
+  }
 }

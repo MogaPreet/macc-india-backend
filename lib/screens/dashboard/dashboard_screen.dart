@@ -9,6 +9,7 @@ import '../categories/categories_list_screen.dart';
 import '../product_requests/product_requests_list_screen.dart';
 import '../contact_requests/contact_requests_list_screen.dart';
 import '../promo_offers/promo_offers_list_screen.dart';
+import '../accessories/accessories_list_screen.dart';
 import 'home_tab.dart';
 
 /// Main dashboard screen with sidebar navigation
@@ -38,6 +39,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return const ContactRequestsListScreen();
       case 'promo_offers':
         return const PromoOffersListScreen();
+      case 'accessories':
+        return const AccessoriesListScreen();
       case 'leads':
         return const Center(
           child: Text(

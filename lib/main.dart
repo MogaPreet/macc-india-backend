@@ -9,6 +9,7 @@ import 'providers/category_provider.dart';
 import 'providers/product_request_provider.dart';
 import 'providers/contact_request_provider.dart';
 import 'providers/promo_offer_provider.dart';
+import 'providers/accessory_provider.dart';
 
 import 'screens/auth/login_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
@@ -47,6 +48,7 @@ class MaccIndiaAdminApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProductRequestProvider()),
         ChangeNotifierProvider(create: (_) => ContactRequestProvider()),
         ChangeNotifierProvider(create: (_) => PromoOfferProvider()),
+        ChangeNotifierProvider(create: (_) => AccessoryProvider()),
         // Add more providers here as needed (LeadsProvider, etc.)
       ],
       child: MaterialApp(

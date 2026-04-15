@@ -19,6 +19,18 @@ class ProductSpecs {
   final String? responseTime;
   final String? displaySize;
 
+  // Phone/iPad-specific fields
+  final String? screenSize;
+  final String? camera;
+  final String? chipset;
+  final String? simType;
+  final String? connectivity;
+  final String? waterResistance;
+  final String? biometrics;
+  final String? colorOptions;
+  final String? pencilSupport;
+  final String? keyboardSupport;
+
   ProductSpecs({
     this.processor,
     this.ram,
@@ -34,6 +46,16 @@ class ProductSpecs {
     this.refreshRate,
     this.responseTime,
     this.displaySize,
+    this.screenSize,
+    this.camera,
+    this.chipset,
+    this.simType,
+    this.connectivity,
+    this.waterResistance,
+    this.biometrics,
+    this.colorOptions,
+    this.pencilSupport,
+    this.keyboardSupport,
   });
 
   factory ProductSpecs.fromMap(Map<String, dynamic>? data) {
@@ -53,6 +75,16 @@ class ProductSpecs {
       refreshRate: data['refreshRate'],
       responseTime: data['responseTime'],
       displaySize: data['displaySize'],
+      screenSize: data['screenSize'],
+      camera: data['camera'],
+      chipset: data['chipset'],
+      simType: data['simType'],
+      connectivity: data['connectivity'],
+      waterResistance: data['waterResistance'],
+      biometrics: data['biometrics'],
+      colorOptions: data['colorOptions'],
+      pencilSupport: data['pencilSupport'],
+      keyboardSupport: data['keyboardSupport'],
     );
   }
 
@@ -72,6 +104,16 @@ class ProductSpecs {
       'refreshRate': refreshRate,
       'responseTime': responseTime,
       'displaySize': displaySize,
+      'screenSize': screenSize,
+      'camera': camera,
+      'chipset': chipset,
+      'simType': simType,
+      'connectivity': connectivity,
+      'waterResistance': waterResistance,
+      'biometrics': biometrics,
+      'colorOptions': colorOptions,
+      'pencilSupport': pencilSupport,
+      'keyboardSupport': keyboardSupport,
     };
   }
 
@@ -90,6 +132,16 @@ class ProductSpecs {
     String? refreshRate,
     String? responseTime,
     String? displaySize,
+    String? screenSize,
+    String? camera,
+    String? chipset,
+    String? simType,
+    String? connectivity,
+    String? waterResistance,
+    String? biometrics,
+    String? colorOptions,
+    String? pencilSupport,
+    String? keyboardSupport,
   }) {
     return ProductSpecs(
       processor: processor ?? this.processor,
@@ -106,6 +158,16 @@ class ProductSpecs {
       refreshRate: refreshRate ?? this.refreshRate,
       responseTime: responseTime ?? this.responseTime,
       displaySize: displaySize ?? this.displaySize,
+      screenSize: screenSize ?? this.screenSize,
+      camera: camera ?? this.camera,
+      chipset: chipset ?? this.chipset,
+      simType: simType ?? this.simType,
+      connectivity: connectivity ?? this.connectivity,
+      waterResistance: waterResistance ?? this.waterResistance,
+      biometrics: biometrics ?? this.biometrics,
+      colorOptions: colorOptions ?? this.colorOptions,
+      pencilSupport: pencilSupport ?? this.pencilSupport,
+      keyboardSupport: keyboardSupport ?? this.keyboardSupport,
     );
   }
 
@@ -124,7 +186,17 @@ class ProductSpecs {
       resolution != null ||
       refreshRate != null ||
       responseTime != null ||
-      displaySize != null;
+      displaySize != null ||
+      screenSize != null ||
+      camera != null ||
+      chipset != null ||
+      simType != null ||
+      connectivity != null ||
+      waterResistance != null ||
+      biometrics != null ||
+      colorOptions != null ||
+      pencilSupport != null ||
+      keyboardSupport != null;
 }
 
 /// Included item model (accessories, chargers, etc.)
@@ -198,8 +270,10 @@ class ProductType {
   static const String laptop = 'laptop';
   static const String system = 'system';
   static const String monitor = 'monitor';
+  static const String phone = 'phone';
+  static const String ipad = 'ipad';
 
-  static List<String> get values => [laptop, system, monitor];
+  static List<String> get values => [laptop, system, monitor, phone, ipad];
 
   /// Get display label for product type
   static String label(String type) {
@@ -210,6 +284,10 @@ class ProductType {
         return 'System';
       case monitor:
         return 'Monitor (LED)';
+      case phone:
+        return 'Phone';
+      case ipad:
+        return 'iPad / Tablet';
       default:
         return 'Laptop';
     }

@@ -61,6 +61,18 @@ class _EditProductScreenState extends State<EditProductScreen> {
   late TextEditingController _responseTimeController;
   late TextEditingController _displaySizeController;
 
+  // Phone/iPad-specific specs controllers
+  late TextEditingController _screenSizeController;
+  late TextEditingController _cameraController;
+  late TextEditingController _chipsetController;
+  late TextEditingController _simTypeController;
+  late TextEditingController _connectivityController;
+  late TextEditingController _waterResistanceController;
+  late TextEditingController _biometricsController;
+  late TextEditingController _colorOptionsController;
+  late TextEditingController _pencilSupportController;
+  late TextEditingController _keyboardSupportController;
+
   // Included items
   late List<IncludedItem> _includedItems;
 
@@ -137,6 +149,38 @@ class _EditProductScreenState extends State<EditProductScreen> {
       text: product.specs.displaySize ?? '',
     );
 
+    // Phone/iPad specs
+    _screenSizeController = TextEditingController(
+      text: product.specs.screenSize ?? '',
+    );
+    _cameraController = TextEditingController(
+      text: product.specs.camera ?? '',
+    );
+    _chipsetController = TextEditingController(
+      text: product.specs.chipset ?? '',
+    );
+    _simTypeController = TextEditingController(
+      text: product.specs.simType ?? '',
+    );
+    _connectivityController = TextEditingController(
+      text: product.specs.connectivity ?? '',
+    );
+    _waterResistanceController = TextEditingController(
+      text: product.specs.waterResistance ?? '',
+    );
+    _biometricsController = TextEditingController(
+      text: product.specs.biometrics ?? '',
+    );
+    _colorOptionsController = TextEditingController(
+      text: product.specs.colorOptions ?? '',
+    );
+    _pencilSupportController = TextEditingController(
+      text: product.specs.pencilSupport ?? '',
+    );
+    _keyboardSupportController = TextEditingController(
+      text: product.specs.keyboardSupport ?? '',
+    );
+
     // Included items
     _includedItems = product.includedItems.isNotEmpty
         ? List.from(product.includedItems)
@@ -191,6 +235,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _refreshRateController.dispose();
     _responseTimeController.dispose();
     _displaySizeController.dispose();
+    _screenSizeController.dispose();
+    _cameraController.dispose();
+    _chipsetController.dispose();
+    _simTypeController.dispose();
+    _connectivityController.dispose();
+    _waterResistanceController.dispose();
+    _biometricsController.dispose();
+    _colorOptionsController.dispose();
+    _pencilSupportController.dispose();
+    _keyboardSupportController.dispose();
     _warrantyDurationController.dispose();
     _warrantyTypeController.dispose();
     _warrantyDescController.dispose();
@@ -241,6 +295,36 @@ class _EditProductScreenState extends State<EditProductScreen> {
           : null,
       displaySize: _displaySizeController.text.trim().isNotEmpty
           ? _displaySizeController.text.trim()
+          : null,
+      screenSize: _screenSizeController.text.trim().isNotEmpty
+          ? _screenSizeController.text.trim()
+          : null,
+      camera: _cameraController.text.trim().isNotEmpty
+          ? _cameraController.text.trim()
+          : null,
+      chipset: _chipsetController.text.trim().isNotEmpty
+          ? _chipsetController.text.trim()
+          : null,
+      simType: _simTypeController.text.trim().isNotEmpty
+          ? _simTypeController.text.trim()
+          : null,
+      connectivity: _connectivityController.text.trim().isNotEmpty
+          ? _connectivityController.text.trim()
+          : null,
+      waterResistance: _waterResistanceController.text.trim().isNotEmpty
+          ? _waterResistanceController.text.trim()
+          : null,
+      biometrics: _biometricsController.text.trim().isNotEmpty
+          ? _biometricsController.text.trim()
+          : null,
+      colorOptions: _colorOptionsController.text.trim().isNotEmpty
+          ? _colorOptionsController.text.trim()
+          : null,
+      pencilSupport: _pencilSupportController.text.trim().isNotEmpty
+          ? _pencilSupportController.text.trim()
+          : null,
+      keyboardSupport: _keyboardSupportController.text.trim().isNotEmpty
+          ? _keyboardSupportController.text.trim()
           : null,
     );
   }
@@ -703,6 +787,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
           case ProductType.monitor:
             icon = Icons.monitor;
             break;
+          case ProductType.phone:
+            icon = Icons.phone_android;
+            break;
+          case ProductType.ipad:
+            icon = Icons.tablet_mac;
+            break;
           default:
             icon = Icons.laptop_mac;
         }
@@ -766,6 +856,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
   Widget _buildSpecsForm() {
     if (_selectedProductType == ProductType.monitor) {
       return _buildMonitorSpecsForm();
+    }
+    if (_selectedProductType == ProductType.phone) {
+      return _buildPhoneSpecsForm();
+    }
+    if (_selectedProductType == ProductType.ipad) {
+      return _buildIpadSpecsForm();
     }
 
     final productProvider = context.read<ProductProvider>();
@@ -953,6 +1049,341 @@ class _EditProductScreenState extends State<EditProductScreen> {
             labelText: 'Weight',
             hintText: 'e.g., 5.2 kg',
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhoneSpecsForm() {
+    final productProvider = context.read<ProductProvider>();
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _screenSizeController,
+                labelText: 'Screen Size',
+                hintText: 'e.g., 6.7" Super Retina XDR',
+                suggestions: productProvider.getUniqueScreenSizeValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _chipsetController,
+                labelText: 'Chipset',
+                hintText: 'e.g., Apple A17 Pro',
+                suggestions: productProvider.getUniqueChipsetValues(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _ramController,
+                labelText: 'RAM',
+                hintText: 'e.g., 8GB',
+                suggestions: productProvider.getUniqueRamValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _storageController,
+                labelText: 'Storage',
+                hintText: 'e.g., 256GB',
+                suggestions: productProvider.getUniqueStorageValues(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _cameraController,
+                labelText: 'Camera',
+                hintText: 'e.g., 48MP + 12MP + 12MP',
+                suggestions: productProvider.getUniqueCameraValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _batteryController,
+                labelText: 'Battery',
+                hintText: 'e.g., 4422 mAh',
+                suggestions: productProvider.getUniqueBatteryValues(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _osController,
+                labelText: 'OS',
+                hintText: 'e.g., iOS 17 / Android 14',
+                suggestions: productProvider.getUniqueOsValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _simTypeController,
+                labelText: 'SIM Type',
+                hintText: 'e.g., Nano-SIM + eSIM',
+                suggestions: productProvider.getUniqueSimTypeValues(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _connectivityController,
+                labelText: 'Connectivity',
+                hintText: 'e.g., 5G, WiFi 6E, BT 5.3',
+                suggestions: productProvider.getUniqueConnectivityValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: TextFormField(
+                controller: _waterResistanceController,
+                decoration: const InputDecoration(
+                  labelText: 'Water Resistance',
+                  hintText: 'e.g., IP68',
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _biometricsController,
+                decoration: const InputDecoration(
+                  labelText: 'Biometrics',
+                  hintText: 'e.g., Face ID / Fingerprint',
+                ),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: TextFormField(
+                controller: _weightController,
+                decoration: const InputDecoration(
+                  labelText: 'Weight',
+                  hintText: 'e.g., 187g',
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _colorOptionsController,
+                decoration: const InputDecoration(
+                  labelText: 'Color Options',
+                  hintText: 'e.g., Black, Silver, Gold',
+                ),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: TextFormField(
+                controller: _portsController,
+                decoration: const InputDecoration(
+                  labelText: 'Ports',
+                  hintText: 'e.g., USB-C / Lightning',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIpadSpecsForm() {
+    final productProvider = context.read<ProductProvider>();
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _screenSizeController,
+                labelText: 'Screen Size',
+                hintText: 'e.g., 12.9" Liquid Retina XDR',
+                suggestions: productProvider.getUniqueScreenSizeValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _chipsetController,
+                labelText: 'Chipset',
+                hintText: 'e.g., Apple M2 / Snapdragon',
+                suggestions: productProvider.getUniqueChipsetValues(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _ramController,
+                labelText: 'RAM',
+                hintText: 'e.g., 8GB',
+                suggestions: productProvider.getUniqueRamValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _storageController,
+                labelText: 'Storage',
+                hintText: 'e.g., 256GB',
+                suggestions: productProvider.getUniqueStorageValues(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _cameraController,
+                labelText: 'Camera',
+                hintText: 'e.g., 12MP Wide + 10MP Ultra Wide',
+                suggestions: productProvider.getUniqueCameraValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _batteryController,
+                labelText: 'Battery',
+                hintText: 'e.g., Up to 10 hours',
+                suggestions: productProvider.getUniqueBatteryValues(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _osController,
+                labelText: 'OS',
+                hintText: 'e.g., iPadOS 17 / Android 14',
+                suggestions: productProvider.getUniqueOsValues(),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: AutocompleteTextField(
+                controller: _connectivityController,
+                labelText: 'Connectivity',
+                hintText: 'e.g., WiFi 6E, BT 5.3, 5G',
+                suggestions: productProvider.getUniqueConnectivityValues(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _pencilSupportController,
+                decoration: const InputDecoration(
+                  labelText: 'Pencil / Stylus Support',
+                  hintText: 'e.g., Apple Pencil 2nd Gen',
+                ),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: TextFormField(
+                controller: _keyboardSupportController,
+                decoration: const InputDecoration(
+                  labelText: 'Keyboard Support',
+                  hintText: 'e.g., Magic Keyboard, Smart Folio',
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _biometricsController,
+                decoration: const InputDecoration(
+                  labelText: 'Biometrics',
+                  hintText: 'e.g., Face ID / Touch ID',
+                ),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: TextFormField(
+                controller: _weightController,
+                decoration: const InputDecoration(
+                  labelText: 'Weight',
+                  hintText: 'e.g., 682g',
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.paddingM),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _colorOptionsController,
+                decoration: const InputDecoration(
+                  labelText: 'Color Options',
+                  hintText: 'e.g., Space Gray, Silver',
+                ),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: TextFormField(
+                controller: _portsController,
+                decoration: const InputDecoration(
+                  labelText: 'Ports',
+                  hintText: 'e.g., USB-C / Thunderbolt',
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

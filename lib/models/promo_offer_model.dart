@@ -24,18 +24,26 @@ class PromoOfferModel {
     required this.createdAt,
   });
 
-  /// Check if offer is currently valid (within date range)
+  static DateTime _startOfDay(DateTime d) =>
+      DateTime(d.year, d.month, d.day);
+
+  static DateTime _endOfDay(DateTime d) =>
+      DateTime(d.year, d.month, d.day, 23, 59, 59, 999);
+
+  /// Check if offer is currently valid (within date range). Date-only fields are inclusive.
   bool get isCurrentlyValid {
     final now = DateTime.now();
-    if (startDate != null && now.isBefore(startDate!)) return false;
-    if (endDate != null && now.isAfter(endDate!)) return false;
+    if (startDate != null && now.isBefore(_startOfDay(startDate!))) {
+      return false;
+    }
+    if (endDate != null && now.isAfter(_endOfDay(endDate!))) return false;
     return true;
   }
 
-  /// Check if offer has expired
+  /// Check if offer has expired (end date is inclusive through end of that day).
   bool get hasExpired {
     if (endDate == null) return false;
-    return DateTime.now().isAfter(endDate!);
+    return DateTime.now().isAfter(_endOfDay(endDate!));
   }
 
   /// Get status text

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/promo_offer_model.dart';
 import '../services/firestore_service.dart';
@@ -53,6 +54,28 @@ class PromoOfferProvider with ChangeNotifier {
     }
   }
 
+  Map<String, dynamic> _promoDateFields({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    final m = <String, dynamic>{};
+    if (startDate != null) {
+      m['startDate'] = Timestamp.fromDate(
+        DateTime(startDate.year, startDate.month, startDate.day),
+      );
+    } else {
+      m['startDate'] = FieldValue.delete();
+    }
+    if (endDate != null) {
+      m['endDate'] = Timestamp.fromDate(
+        DateTime(endDate.year, endDate.month, endDate.day),
+      );
+    } else {
+      m['endDate'] = FieldValue.delete();
+    }
+    return m;
+  }
+
   /// Add a new promo offer
   Future<bool> addOffer({
     required String title,
@@ -69,7 +92,8 @@ class PromoOfferProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // If setting as active, deactivate all other offers first
+      await fetchOffers();
+      // If setting as active, deactivate all other offers first (server-side)
       if (isActive) {
         await _deactivateAllOffers();
       }
@@ -87,16 +111,21 @@ class PromoOfferProvider with ChangeNotifier {
       );
 
       // Create offer document
+      final now = DateTime.now();
       final offerData = PromoOfferModel(
         id: '',
         title: title,
         subtitle: subtitle,
         backgroundImage: imageUrl,
         productIds: productIds,
-        startDate: startDate,
-        endDate: endDate,
+        startDate: startDate != null
+            ? DateTime(startDate.year, startDate.month, startDate.day)
+            : null,
+        endDate: endDate != null
+            ? DateTime(endDate.year, endDate.month, endDate.day)
+            : null,
         isActive: isActive,
-        createdAt: DateTime.now(),
+        createdAt: now,
       );
 
       await _firestoreService.addDocument(
@@ -134,7 +163,7 @@ class PromoOfferProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // If setting as active, deactivate all other offers first
+      await fetchOffers();
       if (isActive) {
         await _deactivateAllOffers(exceptId: offerId);
       }
@@ -155,16 +184,16 @@ class PromoOfferProvider with ChangeNotifier {
         );
       }
 
-      // Update offer document
-      final updateData = {
+      final updateData = <String, dynamic>{
         'title': title,
         'subtitle': subtitle,
         'backgroundImage': imageUrl,
         'productIds': productIds,
-        'startDate': startDate,
-        'endDate': endDate,
         'isActive': isActive,
       };
+      updateData.addAll(
+        _promoDateFields(startDate: startDate, endDate: endDate),
+      );
 
       await _firestoreService.updateDocument(
         collection: FirebaseConstants.promoOffersCollection,
@@ -187,7 +216,7 @@ class PromoOfferProvider with ChangeNotifier {
   /// Toggle offer active status
   Future<bool> toggleOfferActive(String offerId, bool isActive) async {
     try {
-      // If activating, deactivate all other offers first
+      await fetchOffers();
       if (isActive) {
         await _deactivateAllOffers(exceptId: offerId);
       }
@@ -205,14 +234,31 @@ class PromoOfferProvider with ChangeNotifier {
     }
   }
 
-  /// Deactivate all offers (except optionally one)
+  /// Deactivate all offers (except optionally one). Uses a query so it stays correct if cache is stale.
   Future<void> _deactivateAllOffers({String? exceptId}) async {
-    for (var offer in _offers.where((o) => o.isActive && o.id != exceptId)) {
-      await _firestoreService.updateDocument(
+    try {
+      final snapshot = await _firestoreService.getCollection(
         collection: FirebaseConstants.promoOffersCollection,
-        docId: offer.id,
-        data: {'isActive': false},
+        queryBuilder: (q) => q.where('isActive', isEqualTo: true),
       );
+      for (final doc in snapshot.docs) {
+        if (exceptId != null && doc.id == exceptId) continue;
+        await _firestoreService.updateDocument(
+          collection: FirebaseConstants.promoOffersCollection,
+          docId: doc.id,
+          data: {'isActive': false},
+        );
+      }
+    } catch (e, st) {
+      debugPrint('deactivateAllOffers: $e\n$st');
+      for (final offer
+          in _offers.where((o) => o.isActive && o.id != exceptId)) {
+        await _firestoreService.updateDocument(
+          collection: FirebaseConstants.promoOffersCollection,
+          docId: offer.id,
+          data: {'isActive': false},
+        );
+      }
     }
   }
 

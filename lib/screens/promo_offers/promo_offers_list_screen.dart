@@ -3,8 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
+
 import '../../providers/promo_offer_provider.dart';
+import '../../providers/product_provider.dart';
 import '../../models/promo_offer_model.dart';
+import '../../models/product_model.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/dimensions.dart';
 import 'add_promo_offer_screen.dart';
@@ -24,13 +27,21 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PromoOfferProvider>().fetchOffers();
+      context.read<ProductProvider>().fetchProducts();
     });
   }
 
   Color _getStatusColor(PromoOfferModel offer) {
     if (!offer.isActive) return Colors.grey;
     if (offer.hasExpired) return Colors.red;
-    if (offer.startDate != null && DateTime.now().isBefore(offer.startDate!)) {
+    if (offer.startDate != null &&
+        DateTime.now().isBefore(
+          DateTime(
+            offer.startDate!.year,
+            offer.startDate!.month,
+            offer.startDate!.day,
+          ),
+        )) {
       return Colors.orange;
     }
     return AppColors.successColor;
@@ -82,7 +93,6 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
   Future<void> _toggleActive(PromoOfferModel offer) async {
     final provider = context.read<PromoOfferProvider>();
 
-    // Show warning if activating
     if (!offer.isActive) {
       final confirmed = await showDialog<bool>(
         context: context,
@@ -124,12 +134,8 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Promo Offers'),
-        automaticallyImplyLeading: false,
-      ),
-      body: Consumer<PromoOfferProvider>(
-        builder: (context, provider, child) {
+      body: Consumer2<PromoOfferProvider, ProductProvider>(
+        builder: (context, provider, productProvider, _) {
           if (provider.isLoading && provider.offers.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -162,71 +168,139 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
             );
           }
 
-          if (provider.offers.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.local_offer_outlined,
-                    size: 64,
-                    color: AppColors.textMuted,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppDimensions.paddingL),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: AppColors.dividerColor),
                   ),
-                  const SizedBox(height: AppDimensions.paddingM),
-                  Text(
-                    'No promo offers yet',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: AppDimensions.paddingS),
-                  Text(
-                    'Create your first promotional offer',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Promo offers',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${provider.offers.length} offers · Hero banners with linked products',
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddPromoOfferScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('New promo'),
+                    ),
+                  ],
+                ),
               ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => provider.fetchOffers(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(AppDimensions.paddingL),
-              itemCount: provider.offers.length,
-              itemBuilder: (context, index) {
-                final offer = provider.offers[index];
-                return _buildOfferCard(offer);
-              },
-            ),
+              Expanded(
+                child: provider.offers.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.local_offer_outlined,
+                              size: 72,
+                              color: AppColors.textMuted,
+                            ),
+                            const SizedBox(height: AppDimensions.paddingM),
+                            Text(
+                              'No promo offers yet',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: AppDimensions.paddingS),
+                            const Text(
+                              'Create a hero banner and attach catalog products.',
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                            const SizedBox(height: AppDimensions.paddingL),
+                            FilledButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const AddPromoOfferScreen(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.add),
+                              label: const Text('Create promo'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () async {
+                          await provider.fetchOffers();
+                          await productProvider.fetchProducts();
+                        },
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(AppDimensions.paddingL),
+                          itemCount: provider.offers.length,
+                          itemBuilder: (context, index) {
+                            final offer = provider.offers[index];
+                            return _buildOfferCard(
+                              offer,
+                              productProvider,
+                            );
+                          },
+                        ),
+                      ),
+              ),
+            ],
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AddPromoOfferScreen(),
-            ),
-          );
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add Offer'),
-        backgroundColor: AppColors.primaryColor,
       ),
     );
   }
 
-  Widget _buildOfferCard(PromoOfferModel offer) {
+  Widget _buildOfferCard(
+    PromoOfferModel offer,
+    ProductProvider productProvider,
+  ) {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final statusColor = _getStatusColor(offer);
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingL),
       clipBehavior: Clip.antiAlias,
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+        side: const BorderSide(color: AppColors.borderColor),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Background Image
           AspectRatio(
             aspectRatio: 16 / 9,
             child: Stack(
@@ -248,7 +322,6 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
                     ),
                   ),
                 ),
-                // Gradient overlay
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -256,12 +329,11 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withValues(alpha: 0.7),
+                        Colors.black.withValues(alpha: 0.75),
                       ],
                     ),
                   ),
                 ),
-                // Title overlay
                 Positioned(
                   bottom: 16,
                   left: 16,
@@ -273,8 +345,14 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
                         offer.title,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 20,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black45,
+                              blurRadius: 8,
+                            ),
+                          ],
                         ),
                       ),
                       if (offer.subtitle != null) ...[
@@ -282,7 +360,7 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
                         Text(
                           offer.subtitle!,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 14,
                           ),
                         ),
@@ -290,7 +368,6 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
                     ],
                   ),
                 ),
-                // Status Badge
                 Positioned(
                   top: 12,
                   right: 12,
@@ -316,14 +393,11 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
               ],
             ),
           ),
-
-          // Info & Actions
           Padding(
             padding: const EdgeInsets.all(AppDimensions.paddingL),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date Range
                 Row(
                   children: [
                     const Icon(
@@ -332,36 +406,47 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
                       color: AppColors.textMuted,
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      offer.startDate != null && offer.endDate != null
-                          ? '${dateFormat.format(offer.startDate!)} - ${dateFormat.format(offer.endDate!)}'
-                          : offer.startDate != null
-                          ? 'From ${dateFormat.format(offer.startDate!)}'
-                          : offer.endDate != null
-                          ? 'Until ${dateFormat.format(offer.endDate!)}'
-                          : 'No date limit',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${offer.productIds.length} products',
-                      style: TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 12,
+                    Expanded(
+                      child: Text(
+                        offer.startDate != null && offer.endDate != null
+                            ? '${dateFormat.format(offer.startDate!)} → ${dateFormat.format(offer.endDate!)}'
+                            : offer.startDate != null
+                                ? 'From ${dateFormat.format(offer.startDate!)}'
+                                : offer.endDate != null
+                                    ? 'Until ${dateFormat.format(offer.endDate!)}'
+                                    : 'No date limit',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
                 ),
-
+                const SizedBox(height: AppDimensions.paddingM),
+                Text(
+                  'Linked products',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: AppDimensions.paddingS),
+                SizedBox(
+                  height: 88,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: offer.productIds.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (context, i) {
+                      final id = offer.productIds[i];
+                      final p = productProvider.getProductById(id);
+                      return _ProductThumbCard(product: p, productId: id);
+                    },
+                  ),
+                ),
                 const SizedBox(height: AppDimensions.paddingL),
-
-                // Actions
                 Row(
                   children: [
-                    // Active Toggle
                     Expanded(
                       child: SwitchListTile(
                         title: const Text(
@@ -400,6 +485,94 @@ class _PromoOffersListScreenState extends State<PromoOffersListScreen> {
                   ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductThumbCard extends StatelessWidget {
+  const _ProductThumbCard({
+    required this.product,
+    required this.productId,
+  });
+
+  final ProductModel? product;
+  final String productId;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = product?.name ?? 'Missing';
+    final hasImage = product != null && product!.images.isNotEmpty;
+
+    return Container(
+      width: 200,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceColor,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+        border: Border.all(color: AppColors.borderColor),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 72,
+            height: 88,
+            child: hasImage
+                ? CachedNetworkImage(
+                    imageUrl: product!.mainImage,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) => const ColoredBox(
+                      color: AppColors.cardColor,
+                      child: Icon(Icons.broken_image_outlined),
+                    ),
+                  )
+                : const ColoredBox(
+                    color: AppColors.cardColor,
+                    child: Icon(Icons.inventory_2_outlined,
+                        color: AppColors.textMuted),
+                  ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                  if (product != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '₹${product!.price.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        color: AppColors.primaryLight,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ] else
+                    Text(
+                      productId,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.warningColor,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ],

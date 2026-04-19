@@ -1,13 +1,18 @@
 import 'dart:typed_data';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+
 import '../../providers/promo_offer_provider.dart';
 import '../../providers/product_provider.dart';
+import '../../models/product_model.dart';
 import '../../widgets/image_uploader.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/dimensions.dart';
 import '../../core/utils/validators.dart';
+import 'promo_product_picker_screen.dart';
 
 /// Screen for adding a new promo offer
 class AddPromoOfferScreen extends StatefulWidget {
@@ -23,7 +28,7 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
   final _subtitleController = TextEditingController();
 
   Uint8List? _imageBytes;
-  late final List<String> _selectedProductIds = [];
+  List<String> _selectedProductIds = [];
   DateTime? _startDate;
   DateTime? _endDate;
   bool _isActive = false;
@@ -41,6 +46,22 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
     _titleController.dispose();
     _subtitleController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openPromoProductPicker() async {
+    await context.read<ProductProvider>().fetchProducts();
+    if (!mounted) return;
+    final result = await Navigator.of(context).push<List<String>?>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => PromoProductPickerScreen(
+          initialProductIds: List<String>.from(_selectedProductIds),
+        ),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() => _selectedProductIds = result);
+    }
   }
 
   Future<void> _selectDate(bool isStart) async {
@@ -64,81 +85,24 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
     }
   }
 
-  void _showProductSelector() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => Consumer<ProductProvider>(
-          builder: (context, productProvider, child) {
-            return Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppDimensions.paddingL),
-                  child: Row(
-                    children: [
-                      const Text(
-                        'Select Products',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Done'),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: ListView.builder(
-                    controller: scrollController,
-                    itemCount: productProvider.products.length,
-                    itemBuilder: (context, index) {
-                      final product = productProvider.products[index];
-                      final isSelected = _selectedProductIds.contains(
-                        product.id,
-                      );
-                      return CheckboxListTile(
-                        title: Text(product.name),
-                        subtitle: Text(
-                          '₹${product.price.toStringAsFixed(0)} • ${product.brandName}',
-                        ),
-                        value: isSelected,
-                        onChanged: (selected) {
-                          setState(() {
-                            if (selected == true) {
-                              _selectedProductIds.add(product.id);
-                            } else {
-                              _selectedProductIds.remove(product.id);
-                            }
-                          });
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
+  bool _validateDateRange() {
+    if (_startDate != null && _endDate != null) {
+      final s = DateTime(_startDate!.year, _startDate!.month, _startDate!.day);
+      final e = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
+      if (e.isBefore(s)) {
+        Fluttertoast.showToast(
+          msg: 'End date must be on or after start date',
+          backgroundColor: AppColors.errorColor,
+        );
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<void> _saveOffer() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_validateDateRange()) return;
 
     if (_imageBytes == null) {
       Fluttertoast.showToast(
@@ -203,28 +167,32 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Background Image
-                      _buildSectionTitle('Background Image *'),
+                      _buildSectionTitle('Hero image *'),
+                      const SizedBox(height: AppDimensions.paddingS),
+                      Text(
+                        'Wide banner shown on the storefront. Use a strong visual with readable contrast.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textMuted,
+                            ),
+                      ),
                       const SizedBox(height: AppDimensions.paddingM),
                       ImageUploader(
-                        height: 200,
+                        height: 220,
                         onImageSelected: (bytes, fileName) {
                           setState(() {
                             _imageBytes = bytes;
                           });
                         },
                       ),
-
                       const SizedBox(height: AppDimensions.paddingXL),
-
-                      // Title
-                      _buildSectionTitle('Offer Details'),
+                      _buildSectionTitle('Offer details'),
                       const SizedBox(height: AppDimensions.paddingM),
                       TextFormField(
                         controller: _titleController,
                         decoration: const InputDecoration(
                           labelText: 'Title *',
                           hintText: 'e.g., New Year Sale',
+                          border: OutlineInputBorder(),
                         ),
                         validator: (value) =>
                             Validators.required(value, fieldName: 'Title'),
@@ -233,46 +201,28 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
                       TextFormField(
                         controller: _subtitleController,
                         decoration: const InputDecoration(
-                          labelText: 'Subtitle (Optional)',
+                          labelText: 'Subtitle (optional)',
                           hintText: 'e.g., Up to 30% off on selected items',
+                          border: OutlineInputBorder(),
                         ),
                       ),
-
                       const SizedBox(height: AppDimensions.paddingXL),
-
-                      // Products Selection
-                      _buildSectionTitle('Products *'),
-                      const SizedBox(height: AppDimensions.paddingM),
-                      OutlinedButton.icon(
-                        onPressed: _showProductSelector,
-                        icon: const Icon(Icons.add),
-                        label: Text(
-                          _selectedProductIds.isEmpty
-                              ? 'Select Products'
-                              : '${_selectedProductIds.length} products selected',
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 24,
-                          ),
-                        ),
+                      _buildProductsPanel(),
+                      const SizedBox(height: AppDimensions.paddingXL),
+                      _buildSectionTitle('Schedule (optional)'),
+                      const SizedBox(height: AppDimensions.paddingS),
+                      Text(
+                        'Dates are inclusive. Leave blank for no time limit.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textMuted,
+                            ),
                       ),
-                      if (_selectedProductIds.isNotEmpty) ...[
-                        const SizedBox(height: AppDimensions.paddingM),
-                        _buildSelectedProductsPreview(),
-                      ],
-
-                      const SizedBox(height: AppDimensions.paddingXL),
-
-                      // Date Range
-                      _buildSectionTitle('Date Range (Optional)'),
                       const SizedBox(height: AppDimensions.paddingM),
                       Row(
                         children: [
                           Expanded(
                             child: _buildDateField(
-                              label: 'Start Date',
+                              label: 'Start date',
                               date: _startDate,
                               onTap: () => _selectDate(true),
                               onClear: () => setState(() => _startDate = null),
@@ -281,7 +231,7 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
                           const SizedBox(width: AppDimensions.paddingM),
                           Expanded(
                             child: _buildDateField(
-                              label: 'End Date',
+                              label: 'End date',
                               date: _endDate,
                               onTap: () => _selectDate(false),
                               onClear: () => setState(() => _endDate = null),
@@ -289,21 +239,18 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: AppDimensions.paddingXL),
-
-                      // Active Toggle
                       Card(
                         child: SwitchListTile(
                           title: const Text(
-                            'Make Active',
+                            'Make active',
                             style: TextStyle(
                               color: AppColors.textPrimary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           subtitle: const Text(
-                            'Only one offer can be active at a time',
+                            'Only one offer should be live; activating turns others off.',
                             style: TextStyle(color: AppColors.textSecondary),
                           ),
                           value: _isActive,
@@ -312,10 +259,7 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
                           activeTrackColor: AppColors.successColor,
                         ),
                       ),
-
                       const SizedBox(height: AppDimensions.paddingXL),
-
-                      // Save Button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -334,7 +278,7 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
                                     ),
                                   )
                                 : const Text(
-                                    'Create Promo Offer',
+                                    'Create promo offer',
                                     style: TextStyle(fontSize: 16),
                                   ),
                           ),
@@ -345,8 +289,6 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
                   ),
                 ),
               ),
-
-              // Upload Progress
               if (provider.isLoading && provider.uploadProgress > 0)
                 Positioned(
                   bottom: 0,
@@ -383,13 +325,130 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
     );
   }
 
+  Widget _buildProductsPanel() {
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.hotDealColor.withValues(alpha: 0.12),
+            AppColors.surfaceColor.withValues(alpha: 0.6),
+          ],
+        ),
+        border: Border.all(color: AppColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.hotDealColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+                ),
+                child: const Icon(
+                  Icons.local_offer_rounded,
+                  color: AppColors.hotDealColor,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: AppDimensions.paddingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Featured products *',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Open the full-screen catalog to search and filter. Drag rows to set the order shoppers see.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                            height: 1.35,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.paddingL),
+          FilledButton.icon(
+            onPressed: _openPromoProductPicker,
+            icon: const Icon(Icons.add_shopping_cart_rounded),
+            label: Text(
+              _selectedProductIds.isEmpty
+                  ? 'Browse catalog & add products'
+                  : 'Edit selection (${_selectedProductIds.length})',
+            ),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.paddingM),
+          if (_selectedProductIds.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  'No products yet — tap the button above.',
+                  style: TextStyle(color: AppColors.textMuted),
+                ),
+              ),
+            )
+          else
+            Consumer<ProductProvider>(
+              builder: (context, productProvider, _) {
+                return ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  buildDefaultDragHandles: false,
+                  itemCount: _selectedProductIds.length,
+                  onReorder: (oldIndex, newIndex) {
+                    setState(() {
+                      if (newIndex > oldIndex) newIndex -= 1;
+                      final id = _selectedProductIds.removeAt(oldIndex);
+                      _selectedProductIds.insert(newIndex, id);
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    final id = _selectedProductIds[index];
+                    final p = productProvider.getProductById(id);
+                    return _PromoSelectedRow(
+                      key: ValueKey('promo_sel_$id'),
+                      index: index,
+                      product: p,
+                      productId: id,
+                      onRemove: () {
+                        setState(() => _selectedProductIds.removeAt(index));
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        color: AppColors.textPrimary,
-        fontWeight: FontWeight.bold,
-      ),
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
     );
   }
 
@@ -404,6 +463,7 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
+          border: const OutlineInputBorder(),
           suffixIcon: date != null
               ? IconButton(
                   icon: const Icon(Icons.clear, size: 18),
@@ -422,30 +482,70 @@ class _AddPromoOfferScreenState extends State<AddPromoOfferScreen> {
       ),
     );
   }
+}
 
-  Widget _buildSelectedProductsPreview() {
-    return Consumer<ProductProvider>(
-      builder: (context, productProvider, child) {
-        final selectedProducts = productProvider.products
-            .where((p) => _selectedProductIds.contains(p.id))
-            .toList();
+class _PromoSelectedRow extends StatelessWidget {
+  const _PromoSelectedRow({
+    super.key,
+    required this.index,
+    required this.product,
+    required this.productId,
+    required this.onRemove,
+  });
 
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: selectedProducts.map((product) {
-            return Chip(
-              label: Text(product.name, style: const TextStyle(fontSize: 12)),
-              onDeleted: () {
-                setState(() {
-                  _selectedProductIds.remove(product.id);
-                });
-              },
-              deleteIconColor: AppColors.textMuted,
-            );
-          }).toList(),
-        );
-      },
+  final int index;
+  final ProductModel? product;
+  final String productId;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = product?.name ?? 'Removed product';
+    final subtitle = product != null
+        ? '${ProductType.label(product!.productType)} · ${product!.brandName}'
+        : 'ID: $productId — re-pick or remove';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        leading: ReorderableDragStartListener(
+          index: index,
+          child: SizedBox(
+            width: 56,
+            height: 56,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+              child: product != null && product!.images.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: product!.mainImage,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => const ColoredBox(
+                        color: AppColors.surfaceColor,
+                        child: Icon(Icons.broken_image_outlined),
+                      ),
+                    )
+                  : const ColoredBox(
+                      color: AppColors.surfaceColor,
+                      child: Icon(Icons.inventory_2_outlined,
+                          color: AppColors.textMuted),
+                    ),
+            ),
+          ),
+        ),
+        title: Text(
+          title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(subtitle),
+        trailing: IconButton(
+          icon: const Icon(Icons.close, color: AppColors.errorColor),
+          onPressed: onRemove,
+          tooltip: 'Remove',
+        ),
+      ),
     );
   }
 }

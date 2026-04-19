@@ -40,6 +40,15 @@ class ProductProvider extends ChangeNotifier {
   List<ProductModel> getProductsByType(String productType) =>
       _products.where((p) => p.productType == productType).toList();
 
+  /// Resolve a product by id from the last fetched list (call [fetchProducts] first).
+  ProductModel? getProductById(String id) {
+    try {
+      return _products.firstWhere((p) => p.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Fetch all products
   Future<void> fetchProducts() async {
     _isLoading = true;

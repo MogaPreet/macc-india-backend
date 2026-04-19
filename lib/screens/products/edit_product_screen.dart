@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:provider/provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../providers/product_provider.dart';
@@ -11,6 +12,8 @@ import '../../widgets/autocomplete_text_field.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/dimensions.dart';
 import '../../core/utils/validators.dart';
+import '../../widgets/product_description_codec.dart';
+import '../../widgets/product_description_editor.dart';
 
 /// Screen for editing an existing product
 class EditProductScreen extends StatefulWidget {
@@ -28,7 +31,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
   late TextEditingController _slugController;
   late TextEditingController _priceController;
   late TextEditingController _originalPriceController;
-  late TextEditingController _descriptionController;
+  late QuillController _descriptionQuillController;
+  late FocusNode _descriptionFocusNode;
+  late ScrollController _descriptionScrollController;
   late TextEditingController _stockController;
 
   List<Uint8List> _newImageBytes = [];
@@ -98,9 +103,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _originalPriceController = TextEditingController(
       text: product.originalPrice?.toStringAsFixed(0) ?? '',
     );
-    _descriptionController = TextEditingController(
-      text: product.description ?? '',
+    _descriptionQuillController = QuillController(
+      document: ProductDescriptionCodec.documentFromStored(product.description),
+      selection: const TextSelection.collapsed(offset: 0),
     );
+    _descriptionFocusNode = FocusNode();
+    _descriptionScrollController = ScrollController();
     _stockController = TextEditingController(text: product.stock.toString());
 
     _existingImageUrls = List.from(product.images);
@@ -219,7 +227,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _slugController.dispose();
     _priceController.dispose();
     _originalPriceController.dispose();
-    _descriptionController.dispose();
+    _descriptionScrollController.dispose();
+    _descriptionFocusNode.dispose();
+    _descriptionQuillController.dispose();
     _stockController.dispose();
     _processorController.dispose();
     _ramController.dispose();
@@ -374,9 +384,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
       productId: widget.product.id,
       name: _nameController.text.trim(),
       slug: _slugController.text.trim(),
-      description: _descriptionController.text.trim().isNotEmpty
-          ? _descriptionController.text.trim()
-          : null,
+      description: ProductDescriptionCodec.serializeNullable(
+        _descriptionQuillController,
+      ),
       brandId: _selectedBrandId!,
       brandName: _selectedBrandName!,
       categoryIds: _selectedCategoryIds,
@@ -637,13 +647,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       ),
                       const SizedBox(height: AppDimensions.paddingM),
 
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          hintText: 'Enter product description',
-                        ),
-                        maxLines: 4,
+                      ProductDescriptionEditor(
+                        controller: _descriptionQuillController,
+                        focusNode: _descriptionFocusNode,
+                        scrollController: _descriptionScrollController,
                       ),
 
                       const SizedBox(height: AppDimensions.paddingXL),

@@ -86,6 +86,12 @@ class SidebarMenu extends StatelessWidget {
                   route: 'accessories',
                 ),
                 _buildMenuItem(
+                  icon: Icons.layers_outlined,
+                  activeIcon: Icons.layers,
+                  label: 'Combos',
+                  route: 'combos',
+                ),
+                _buildMenuItem(
                   icon: Icons.business_outlined,
                   activeIcon: Icons.business,
                   label: 'Brands',

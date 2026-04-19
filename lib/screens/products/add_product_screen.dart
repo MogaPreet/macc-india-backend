@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:provider/provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../providers/product_provider.dart';
@@ -11,6 +12,8 @@ import '../../widgets/autocomplete_text_field.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/dimensions.dart';
 import '../../core/utils/validators.dart';
+import '../../widgets/product_description_codec.dart';
+import '../../widgets/product_description_editor.dart';
 
 /// Screen for adding a new product
 class AddProductScreen extends StatefulWidget {
@@ -29,7 +32,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _slugController = TextEditingController();
   final _priceController = TextEditingController();
   final _originalPriceController = TextEditingController();
-  final _descriptionController = TextEditingController();
+  late final QuillController _descriptionQuillController;
+  late final FocusNode _descriptionFocusNode;
+  late final ScrollController _descriptionScrollController;
   final _stockController = TextEditingController(text: '1');
 
   // Multi-image state
@@ -103,7 +108,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _priceController.text = source.price.toStringAsFixed(0);
       _originalPriceController.text =
           source.originalPrice?.toStringAsFixed(0) ?? '';
-      _descriptionController.text = source.description ?? '';
       _stockController.text = source.stock.toString();
       _isFeatured = source.isFeatured;
       _isActive = source.isActive;
@@ -167,6 +171,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _youtubeUrlController.text = source.youtubeUrl ?? '';
     }
 
+    _descriptionQuillController = QuillController(
+      document: ProductDescriptionCodec.documentFromStored(
+        widget.duplicateFrom?.description,
+      ),
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+    _descriptionFocusNode = FocusNode();
+    _descriptionScrollController = ScrollController();
+
     // Fetch brands and categories
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BrandProvider>().fetchBrands();
@@ -196,7 +209,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _slugController.dispose();
     _priceController.dispose();
     _originalPriceController.dispose();
-    _descriptionController.dispose();
+    _descriptionScrollController.dispose();
+    _descriptionFocusNode.dispose();
+    _descriptionQuillController.dispose();
     _stockController.dispose();
     _processorController.dispose();
     _ramController.dispose();
@@ -350,9 +365,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final success = await provider.addProduct(
       name: _nameController.text.trim(),
       slug: _slugController.text.trim(),
-      description: _descriptionController.text.trim().isNotEmpty
-          ? _descriptionController.text.trim()
-          : null,
+      description: ProductDescriptionCodec.serializeNullable(
+        _descriptionQuillController,
+      ),
       brandId: _selectedBrandId!,
       brandName: _selectedBrandName!,
       categoryIds: _selectedCategoryIds,
@@ -615,13 +630,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       ),
                       const SizedBox(height: AppDimensions.paddingM),
 
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          hintText: 'Enter product description',
-                        ),
-                        maxLines: 4,
+                      ProductDescriptionEditor(
+                        controller: _descriptionQuillController,
+                        focusNode: _descriptionFocusNode,
+                        scrollController: _descriptionScrollController,
                       ),
 
                       const SizedBox(height: AppDimensions.paddingXL),

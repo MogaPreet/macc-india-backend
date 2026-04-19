@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:macc_india_new/firebase_options.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ import 'providers/product_request_provider.dart';
 import 'providers/contact_request_provider.dart';
 import 'providers/promo_offer_provider.dart';
 import 'providers/accessory_provider.dart';
+import 'providers/combo_provider.dart';
 
 import 'screens/auth/login_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
@@ -49,12 +51,16 @@ class MaccIndiaAdminApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ContactRequestProvider()),
         ChangeNotifierProvider(create: (_) => PromoOfferProvider()),
         ChangeNotifierProvider(create: (_) => AccessoryProvider()),
+        ChangeNotifierProvider(create: (_) => ComboProvider()),
         // Add more providers here as needed (LeadsProvider, etc.)
       ],
       child: MaterialApp(
         title: 'MACC INDIA Admin Portal',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
+        localizationsDelegates:
+            FlutterQuillLocalizations.localizationsDelegates,
+        supportedLocales: FlutterQuillLocalizations.supportedLocales,
         home: AuthWrapper(),
       ),
     );

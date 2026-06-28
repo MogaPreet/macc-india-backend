@@ -122,6 +122,12 @@ class SidebarMenu extends StatelessWidget {
                   route: 'promo_offers',
                 ),
                 _buildMenuItem(
+                  icon: Icons.article_outlined,
+                  activeIcon: Icons.article,
+                  label: 'Blogs',
+                  route: 'blogs',
+                ),
+                _buildMenuItem(
                   icon: Icons.people_outlined,
                   activeIcon: Icons.people,
                   label: 'Leads',

@@ -13,6 +13,7 @@ class FirebaseConstants {
   static const String promoOffersCollection = 'promoOffers';
   static const String accessoriesCollection = 'accessories';
   static const String combosCollection = 'combos';
+  static const String blogsCollection = 'blogs';
 
   // Settings Documents
   static const String tickerSettingsDoc = 'ticker';
@@ -25,6 +26,7 @@ class FirebaseConstants {
   static const String promoImagesPath = 'promos';
   static const String accessoryImagesPath = 'accessories';
   static const String comboImagesPath = 'combos';
+  static const String blogImagesPath = 'blogs/images';
 
   // Authorized Admin Emails (TODO: Move to Firestore or environment config)
   static const List<String> authorizedAdminEmails = [

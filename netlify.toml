@@ -1,12 +1,11 @@
 [build]
 command = """
 if [ ! -d flutter ]; then
-  git clone -b stable https://github.com/flutter/flutter.git
+  git clone --branch 3.41.6 --depth 1 https://github.com/flutter/flutter.git
 fi
 flutter/bin/flutter --version
 flutter/bin/flutter config --enable-web
-flutter/bin/flutter clean
-flutter/bin/flutter pub get
+flutter/bin/flutter pub get --enforce-lockfile
 flutter/bin/flutter build web --release --no-wasm-dry-run
 """
 publish = "build/web"

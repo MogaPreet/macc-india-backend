@@ -14,6 +14,8 @@ class FirebaseConstants {
   static const String accessoriesCollection = 'accessories';
   static const String combosCollection = 'combos';
   static const String blogsCollection = 'blogs';
+  static const String employeesCollection = 'employees';
+  static const String employeeAssignmentsCollection = 'employeeAssignments';
 
   // Settings Documents
   static const String tickerSettingsDoc = 'ticker';

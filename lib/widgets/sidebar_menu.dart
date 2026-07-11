@@ -128,6 +128,12 @@ class SidebarMenu extends StatelessWidget {
                   route: 'blogs',
                 ),
                 _buildMenuItem(
+                  icon: Icons.badge_outlined,
+                  activeIcon: Icons.badge,
+                  label: 'Employees',
+                  route: 'employees',
+                ),
+                _buildMenuItem(
                   icon: Icons.people_outlined,
                   activeIcon: Icons.people,
                   label: 'Leads',

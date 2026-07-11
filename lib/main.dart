@@ -13,6 +13,8 @@ import 'providers/promo_offer_provider.dart';
 import 'providers/accessory_provider.dart';
 import 'providers/combo_provider.dart';
 import 'providers/blog_provider.dart';
+import 'providers/employee_provider.dart';
+import 'providers/employee_assignment_provider.dart';
 
 import 'screens/auth/login_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
@@ -54,7 +56,8 @@ class MaccIndiaAdminApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AccessoryProvider()),
         ChangeNotifierProvider(create: (_) => ComboProvider()),
         ChangeNotifierProvider(create: (_) => BlogProvider()),
-        // Add more providers here as needed (LeadsProvider, etc.)
+        ChangeNotifierProvider(create: (_) => EmployeeProvider()),
+        ChangeNotifierProvider(create: (_) => EmployeeAssignmentProvider()),
       ],
       child: MaterialApp(
         title: 'MACC INDIA Admin Portal',

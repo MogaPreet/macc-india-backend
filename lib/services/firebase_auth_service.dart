@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
 import '../core/constants/firebase_constants.dart';
+import '../firebase_options.dart';
 
 /// Service for Firebase Authentication
 class FirebaseAuthService {
@@ -22,7 +26,6 @@ class FirebaseAuthService {
         password: password,
       );
 
-      // Check if user is authorized admin
       if (!isAuthorizedAdmin(email)) {
         await signOut();
         throw Exception(
@@ -85,13 +88,69 @@ class FirebaseAuthService {
     }
   }
 
+  /// Create employee Auth user via Identity Toolkit REST API.
+  /// Avoids secondary Firebase Auth apps (broken on Flutter web) and does
+  /// not replace the currently signed-in admin session.
+  Future<String> createEmployeeAuthUser({
+    required String email,
+    required String password,
+  }) async {
+    final apiKey = DefaultFirebaseOptions.web.apiKey;
+    final uri = Uri.parse(
+      'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=$apiKey',
+    );
+
+    try {
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email.trim().toLowerCase(),
+          'password': password,
+          'returnSecureToken': true,
+        }),
+      );
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final localId = body['localId'] as String?;
+        if (localId == null || localId.isEmpty) {
+          throw Exception('Account creation failed: no user id returned');
+        }
+        return localId;
+      }
+
+      final error = body['error'] as Map<String, dynamic>?;
+      final message = (error?['message'] as String?) ?? 'UNKNOWN';
+      switch (message) {
+        case 'EMAIL_EXISTS':
+          throw Exception('An account already exists with this email');
+        case 'INVALID_EMAIL':
+          throw Exception('Invalid email address');
+        case 'WEAK_PASSWORD : Password should be at least 6 characters':
+        case 'WEAK_PASSWORD':
+          throw Exception('Password is too weak (min 6 characters)');
+        case 'OPERATION_NOT_ALLOWED':
+          throw Exception(
+            'Email/password sign-in is disabled in Firebase Auth',
+          );
+        default:
+          throw Exception('Account creation failed: $message');
+      }
+    } on Exception {
+      rethrow;
+    } catch (e) {
+      throw Exception('Account creation failed: $e');
+    }
+  }
+
   /// Create new admin user (for initial setup)
   Future<User?> createAdminUser({
     required String email,
     required String password,
   }) async {
     try {
-      // Check if email is authorized
       if (!isAuthorizedAdmin(email)) {
         throw Exception('Email not in authorized admin list');
       }
